@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>블루아카 한섭 일정</title>
+  <style>
+    :root {
+      --border:    #c8d3e0;
+      --border-lt: #e2eaf3;
+      --muted:     #94a3b8;
+      --text:      #1e293b;
+      --day-h:     30px;
+
+      --c-event:  #2563eb;
+      --c-pickup: #be185d;
+      --c-raid:   #b45309;
+      --c-camp:   #15803d;
+
+      --bg-event:  #e8f0fe;
+      --bg-pickup: #fce7f3;
+      --bg-raid:   #fef9c3;
+      --bg-camp:   #dcfce7;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #dde3ec; }
+
+    .page {
+      max-width: 640px;
+      margin: 0 auto;
+      height: 100dvh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      box-shadow: 0 0 24px rgba(0,0,0,0.12);
+    }
+
+    header {
+      flex-shrink: 0;
+      height: 46px;
+      padding: 0 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    header h1 { font-size: 0.92rem; font-weight: 700; }
+    .btn {
+      font-size: 0.68rem; font-weight: 700;
+      padding: 0.27rem 0.75rem;
+      border-radius: 9999px;
+      border: none; cursor: pointer;
+      background: var(--c-event); color: #fff;
+    }
+
+    .cal {
+      flex: 1;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .sched {
+      display: grid;
+      grid-template-columns: 36px 1fr 1fr 1fr 1fr;
+      min-width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text);
+    }
+
+    .ch {
+      position: sticky; top: 0; z-index: 200;
+      padding: 0.42rem 0.3rem;
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.07em;
+      text-align: center; white-space: nowrap;
+      border-bottom: 2.5px solid transparent;
+    }
+    .ch-date   { background: #edf1f7; border-bottom-color: var(--border); }
+    .ch-event  { background: #dbeafe; color: var(--c-event);  border-bottom-color: var(--c-event);  }
+    .ch-pickup { background: #fce7f3; color: var(--c-pickup); border-bottom-color: var(--c-pickup); }
+    .ch-raid   { background: #fef9c3; color: var(--c-raid);   border-bottom-color: var(--c-raid);   }
+    .ch-camp   { background: #dcfce7; color: var(--c-camp);   border-bottom-color: var(--c-camp);   }
+
+    .dc {
+      grid-column: 1;
+      border-right: 1.5px solid var(--border);
+      position: sticky; left: 0; z-index: 60;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent           0px,
+          transparent           calc(var(--day-h) - 1px),
+          var(--border-lt)      calc(var(--day-h) - 1px),
+          var(--border-lt)      var(--day-h)
+        ),
+        #f4f7fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 5px;
+      gap: 1px;
+      overflow: hidden;
+    }
+    .dc.dc-past { opacity: 0.45; }
+
+    .dc-m  { font-size: 0.62rem; color: var(--text);  line-height: 1; font-weight: 800; }
+    .dc-d  { font-size: 0.8rem;  color: var(--text);  line-height: 1; font-weight: 900; }
+    .dc-dw { font-size: 0.44rem; color: var(--muted); line-height: 1; }
+
+    .today-line {
+      grid-column: 1 / -1;
+      border-top: 2.5px solid var(--c-event);
+      position: relative; z-index: 150;
+      pointer-events: none;
+    }
+    .today-line::before {
+      content: 'TODAY';
+      position: absolute;
+      left: 38px; top: -8px;
+      font-size: 0.5rem; font-weight: 900;
+      color: #fff;
+      background: var(--c-event);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+    }
+
+    .box {
+      margin: 2px 3px;
+      border-radius: 0.45rem;
+      padding: 0.35rem 0.45rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      position: relative; z-index: 20;
+    }
+    .box.is-past { opacity: 0.3; }
+
+    .box-event  { background: var(--bg-event);  border: 1.5px solid #93c5fd; border-left: 4px solid var(--c-event);  }
+    .box-pickup { background: var(--bg-pickup); border: 1.5px solid #f9a8d4; border-left: 4px solid var(--c-pickup); }
+    .box-raid   { background: var(--bg-raid);   border: 1.5px solid #fde047; border-left: 4px solid var(--c-raid);   }
+    .box-camp   { background: var(--bg-camp);   border: 1.5px solid #86efac; border-left: 4px solid var(--c-camp);   }
+
+    .box-kind {
+      font-size: 0.5rem; font-weight: 700; opacity: 0.6;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .box-title {
+      font-size: 0.67rem; font-weight: 700; line-height: 1.3; color: var(--text);
+    }
+    .box-chars { display: flex; flex-wrap: wrap; gap: 0.16rem; }
+    .char {
+      font-size: 0.58rem; font-weight: 600;
+      padding: 0.07rem 0.26rem;
+      border-radius: 0.2rem;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+    .box-dur {
+      margin-top: auto; padding-top: 0.14rem;
+      font-size: 0.48rem; color: var(--muted); font-weight: 700;
+      border-top: 1px dashed rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>블루아카 한섭 일정</h1>
+    <button class="btn" id="btnToday">▲ 오늘로</button>
+  </header>
+  <div class="cal" id="cal">
+    <div class="loading" id="loading">로딩 중…</div>
+    <div class="sched" id="sched" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_g5vT44r3MXOoMdD_4MjeT0tf4luvbt_7AGUHx4cS0cx0aWFFAYlUiRAx5oAUB_gtFst5Ncy8pkc/pub?output=csv';
+
+const DAY_H = 30;
+const DAYS  = ['일','월','화','수','목','금','토'];
+const HDR   = 1;
+
+const EVENT_TYPES = new Set(['신규','복각','상설']);
+
+const COL_MAP = {
+  '이벤트':       'event',
+  '메인스토리':   'event',
+  '업데이트':     'event',
+  '픽업':         'pickup',
+  '총력전':       'raid',
+  '대결전':       'raid',
+  '제약해제결전': 'raid',
+  '종합전술시험': 'raid',
+  '캠페인':       'camp',
+};
+
+const COL_NUM = { event: 2, pickup: 3, raid: 4, camp: 5 };
+const BOX_CLS = { event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', camp: 'box-camp' };
+
+// ── Date utilities ────────────────────────────────────────────────────────────
+
+function pd(s) {
+  if (!s) return null;
+  s = String(s).trim().replace(/﻿/g, '');
+  if (!s) return null;
+  let m, d, y;
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+  // M/D/YYYY or MM/DD/YYYY (Google Sheets US locale CSV)
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+    [m,d,y] = s.split('/').map(Number);
+    return new Date(y, m-1, d);
+  }
+  // YYYY/M/D
+  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+    [y,m,d] = s.split('/').map(Number);
+    return new Date(y, m-1, d);
+  }
+  // YYYY. M. D. (Korean locale Google Sheets)
+  const koMatch = s.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/);
+  if (koMatch) {
+    [, y, m, d] = koMatch.map(Number);
+    return new Date(y, m-1, d);
+  }
+  // M/D without year
+  if (/^\d{1,2}\/\d{1,2}$/.test(s)) {
+    [m,d] = s.split('/').map(Number);
+    const now = new Date();
+    y = now.getFullYear();
+    const t = new Date(y, m-1, d);
+    if (t < addD(now, -180)) y++;
+    return new Date(y, m-1, d);
+  }
+  return null;
+}
+
+function ds(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addD(d, n)  { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function diffD(a, b) { return Math.round((a - b) / 86400000); }
+function today0()    { const d = new Date(); d.setHours(0,0,0,0); return d; }
+
+// ── CSV parsing ───────────────────────────────────────────────────────────────
+
+function parseCSVLine(line) {
+  const res = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { res.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  res.push(cur);
+  return res;
+}
+
+async function loadRows() {
+  const res = await fetch(CSV_URL);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  // Strip BOM
+  const clean = text.replace(/^﻿/, '');
+  const lines = clean.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^﻿/, ''));
+  console.log('[CSV] headers:', headers);
+  const all = lines.slice(1).map(line => {
+    const vals = parseCSVLine(line);
+    const row = {};
+    headers.forEach((h, i) => row[h] = (vals[i] || '').trim());
+    return row;
+  });
+  console.log('[CSV] first row raw:', all[0]);
+  const filtered = all.filter(r => r['종류'] && pd(r['한섭시작일자']));
+  console.log(`[CSV] total=${all.length}, valid=${filtered.length}`);
+  return filtered;
+}
+
+// ── Group same-range pickups into one box ─────────────────────────────────────
+
+function groupPickups(rows) {
+  const out  = [];
+  const seen = {};
+  rows.forEach(row => {
+    if (row['종류'] !== '픽업') { out.push(row); return; }
+    const key = `${row['한섭시작일자']}|${row['한섭종료일자']}`;
+    if (seen[key]) {
+      seen[key]._chars.push(row['속성1']);
+    } else {
+      const g = { ...row, _chars: [row['속성1']] };
+      seen[key] = g;
+      out.push(g);
+    }
+  });
+  return out;
+}
+
+// ── Box content ───────────────────────────────────────────────────────────────
+
+function chip(text, extraStyle) {
+  const s = document.createElement('span');
+  s.className = 'char';
+  if (extraStyle) s.style.cssText = extraStyle;
+  s.textContent = text;
+  return s;
+}
+
+function chipsRow(texts) {
+  const wrap = document.createElement('div');
+  wrap.className = 'box-chars';
+  texts.forEach(t => wrap.appendChild(chip(t)));
+  return wrap;
+}
+
+function buildBoxContent(row) {
+  const kind = row['종류'];
+  const a1 = row['속성1'] || '';
+  const a2 = row['속성2'] || '';
+  const a3 = row['속성3'] || '';
+  const a4 = row['속성4'] || '';
+  const a5 = row['속성5'] || '';
+  const frag = document.createDocumentFragment();
+
+  const mkTitle = (text, style) => {
+    const el = document.createElement('div');
+    el.className = 'box-title';
+    if (style) el.style.cssText = style;
+    el.textContent = text;
+    return el;
+  };
+
+  if (kind === '픽업') {
+    frag.appendChild(chipsRow(row._chars || [a1]));
+    return frag;
+  }
+
+  if (kind === '이벤트') {
+    frag.appendChild(mkTitle(a1));
+    if (EVENT_TYPES.has(a2)) frag.appendChild(chip(a2));
+    // chars: a3 if we used a2 as type, else a2+a3
+    const charStr = EVENT_TYPES.has(a2) ? a3 : [a2, a3].filter(Boolean).join(', ');
+    if (charStr) {
+      frag.appendChild(chipsRow(charStr.split(',').map(c => c.trim()).filter(Boolean)));
+    }
+    return frag;
+  }
+
+  if (kind === '메인스토리') {
+    frag.appendChild(mkTitle(a1, 'font-style:italic'));
+    return frag;
+  }
+
+  if (kind === '업데이트') {
+    frag.appendChild(mkTitle(a1, 'color:var(--muted)'));
+    return frag;
+  }
+
+  if (kind === '총력전' || kind === '제약해제결전') {
+    frag.appendChild(mkTitle(a1 + (a2 ? ` (${a2})` : '')));
+    const chips = [a3, a5].filter(Boolean);
+    if (chips.length) frag.appendChild(chipsRow(chips));
+    return frag;
+  }
+
+  if (kind === '대결전') {
+    frag.appendChild(mkTitle(a1 + (a2 ? ` (${a2})` : '')));
+    const chips = [];
+    if (a3 && a4) chips.push(`${a3} / ${a4}`);
+    else if (a3) chips.push(a3);
+    if (a5) chips.push(a5);
+    if (chips.length) frag.appendChild(chipsRow(chips));
+    return frag;
+  }
+
+  if (kind === '종합전술시험') {
+    frag.appendChild(mkTitle(a1));
+    return frag;
+  }
+
+  if (kind === '캠페인') {
+    frag.appendChild(mkTitle([a1, a2].filter(Boolean).join(' · ')));
+    return frag;
+  }
+
+  frag.appendChild(mkTitle(a1));
+  return frag;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+
+function render(rows) {
+  const sched = document.getElementById('sched');
+  sched.innerHTML = '';
+
+  const entries = groupPickups(rows);
+
+  // Grid date range
+  const starts  = entries.map(r => pd(r['한섭시작일자'])).filter(Boolean);
+  const ends    = entries.map(r => pd(r['한섭종료일자'])).filter(Boolean);
+  const allDts  = [...starts, ...ends];
+  const gridStart = addD(new Date(Math.min(...allDts)), -3);
+  const gridEnd   = addD(new Date(Math.max(...allDts)), 7);
+  const totalDays = diffD(gridEnd, gridStart) + 1;
+  const todayDate = today0();
+
+  sched.style.gridAutoRows = `${DAY_H}px`;
+
+  const toRow = d => {
+    if (!d) return null;
+    return diffD(typeof d === 'string' ? pd(d) : d, gridStart) + HDR + 1;
+  };
+
+  // ── Column headers
+  [
+    { col:1, cls:'ch ch-date',   t:''       },
+    { col:2, cls:'ch ch-event',  t:'이벤트'  },
+    { col:3, cls:'ch ch-pickup', t:'픽업'    },
+    { col:4, cls:'ch ch-raid',   t:'총력전'  },
+    { col:5, cls:'ch ch-camp',   t:'캠페인'  },
+  ].forEach(({ col, cls, t }) => {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.textContent = t;
+    el.style.cssText = `grid-column:${col};grid-row:${HDR};`;
+    sched.appendChild(el);
+  });
+
+  // ── Date column: weekly markers
+  let wk = new Date(gridStart);
+  while (wk <= gridEnd) {
+    const r0   = toRow(wk);
+    const next = addD(wk, 7);
+    const r1   = Math.min(toRow(next), totalDays + HDR + 1);
+    const isPast = next <= todayDate;
+
+    const el = document.createElement('div');
+    el.className = 'dc' + (isPast ? ' dc-past' : '');
+    el.style.cssText = `grid-row:${r0}/${r1};`;
+    el.innerHTML = `
+      <span class="dc-m">${wk.getMonth()+1}월</span>
+      <span class="dc-d">${wk.getDate()}</span>
+      <span class="dc-dw">${DAYS[wk.getDay()]}</span>
+    `;
+    sched.appendChild(el);
+    wk = next;
+  }
+
+  // ── Today line
+  const todayRow = toRow(todayDate);
+  if (todayRow >= HDR + 1 && todayRow <= totalDays + HDR + 1) {
+    const tl = document.createElement('div');
+    tl.id = '_today';
+    tl.className = 'today-line';
+    tl.style.cssText = `grid-row:${todayRow};`;
+    sched.appendChild(tl);
+  }
+
+  // ── Content boxes
+  entries.forEach(row => {
+    const colKey = COL_MAP[row['종류']];
+    if (!colKey) return;
+
+    const startDate = pd(row['한섭시작일자']);
+    let   endDate   = pd(row['한섭종료일자']);
+
+    // Entries with no end: show as 1-day pin (업데이트/메인스토리)
+    if (!endDate) {
+      const pinKinds = new Set(['업데이트', '메인스토리']);
+      endDate = pinKinds.has(row['종류']) ? addD(startDate, 1) : addD(gridEnd, 1);
+    }
+
+    const r0 = toRow(startDate);
+    const r1 = toRow(endDate);
+    if (!r0 || r0 >= r1) return;
+
+    const dur    = diffD(endDate, startDate);
+    const isPast = endDate <= todayDate;
+
+    const el = document.createElement('div');
+    el.className = `box ${BOX_CLS[colKey]}` + (isPast ? ' is-past' : '');
+    el.style.cssText = `grid-column:${COL_NUM[colKey]};grid-row:${r0}/${r1};`;
+
+    el.appendChild(buildBoxContent(row));
+
+    if (dur >= 4) {
+      const sd = startDate, ed = addD(endDate, -1);
+      const df = document.createElement('div');
+      df.className = 'box-dur';
+      df.textContent = `${sd.getMonth()+1}/${sd.getDate()} – ${ed.getMonth()+1}/${ed.getDate()}  (${dur}일)`;
+      el.appendChild(df);
+    }
+
+    sched.appendChild(el);
+  });
+
+  // ── Scroll to today
+  requestAnimationFrame(() => {
+    const cal = document.getElementById('cal');
+    const px  = (todayRow - (HDR + 1)) * DAY_H;
+    cal.scrollTop = Math.max(0, px - cal.clientHeight * 0.3);
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+async function init() {
+  const loading = document.getElementById('loading');
+  const sched   = document.getElementById('sched');
+  try {
+    const rows = await loadRows();
+    if (!rows.length) {
+      loading.textContent = '데이터 없음 — 콘솔(F12)에서 [CSV] 로그를 확인하세요.';
+      return;
+    }
+    loading.style.display = 'none';
+    sched.style.display = '';
+    render(rows);
+  } catch(e) {
+    loading.textContent = `로드 실패: ${e.message}`;
+    console.error(e);
+  }
+}
+
+document.getElementById('btnToday').addEventListener('click', () => {
+  const el  = document.getElementById('_today');
+  const cal = document.getElementById('cal');
+  if (!el) return;
+  const off = (parseInt(el.style.gridRow) - (HDR + 1)) * DAY_H;
+  cal.scrollTop = Math.max(0, off - cal.clientHeight * 0.3);
+});
+
+init();
+</script>
+</body>
+</html>
