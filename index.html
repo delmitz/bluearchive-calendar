@@ -10,7 +10,7 @@
       --border-lt: #e2eaf3;
       --muted:     #94a3b8;
       --text:      #1e293b;
-      --day-h:     30px;
+      --day-h:     38px;
 
       --c-event:  #2563eb;
       --c-pickup: #be185d;
@@ -47,9 +47,9 @@
       border-bottom: 1px solid var(--border);
       background: #fff;
     }
-    header h1 { font-size: 0.92rem; font-weight: 700; }
+    header h1 { font-size: 1.05rem; font-weight: 700; }
     .btn {
-      font-size: 0.68rem; font-weight: 700;
+      font-size: 0.8rem; font-weight: 700;
       padding: 0.27rem 0.75rem;
       border-radius: 9999px;
       border: none; cursor: pointer;
@@ -73,7 +73,7 @@
 
     .sched {
       display: grid;
-      grid-template-columns: 36px 1fr 1fr 1fr 1fr;
+      grid-template-columns: 44px 1fr 1fr 1fr 1fr;
       min-width: 340px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
@@ -82,7 +82,7 @@
     .ch {
       position: sticky; top: 0; z-index: 200;
       padding: 0.42rem 0.3rem;
-      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.07em;
+      font-size: 0.75rem; font-weight: 800; letter-spacing: 0.07em;
       text-align: center; white-space: nowrap;
       border-bottom: 2.5px solid transparent;
     }
@@ -114,9 +114,9 @@
     }
     .dc.dc-past { opacity: 0.45; }
 
-    .dc-m  { font-size: 0.62rem; color: var(--text);  line-height: 1; font-weight: 800; }
-    .dc-d  { font-size: 0.8rem;  color: var(--text);  line-height: 1; font-weight: 900; }
-    .dc-dw { font-size: 0.44rem; color: var(--muted); line-height: 1; }
+    .dc-m  { font-size: 0.72rem; color: var(--text);  line-height: 1; font-weight: 800; }
+    .dc-d  { font-size: 1rem;    color: var(--text);  line-height: 1; font-weight: 900; }
+    .dc-dw { font-size: 0.62rem; color: var(--muted); line-height: 1; }
 
     .today-line {
       grid-column: 1 / -1;
@@ -127,8 +127,8 @@
     .today-line::before {
       content: 'TODAY';
       position: absolute;
-      left: 38px; top: -8px;
-      font-size: 0.5rem; font-weight: 900;
+      left: 46px; top: -8px;
+      font-size: 0.65rem; font-weight: 900;
       color: #fff;
       background: var(--c-event);
       padding: 0.1rem 0.35rem;
@@ -153,16 +153,16 @@
     .box-camp   { background: var(--bg-camp);   border: 1.5px solid #86efac; border-left: 4px solid var(--c-camp);   }
 
     .box-kind {
-      font-size: 0.5rem; font-weight: 700; opacity: 0.6;
+      font-size: 0.62rem; font-weight: 700; opacity: 0.6;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
     .box-title {
-      font-size: 0.67rem; font-weight: 700; line-height: 1.3; color: var(--text);
+      font-size: 0.82rem; font-weight: 700; line-height: 1.3; color: var(--text);
     }
-    .box-chars { display: flex; flex-wrap: wrap; gap: 0.16rem; }
+    .box-chars { display: flex; flex-wrap: wrap; gap: 0.18rem; }
     .char {
-      font-size: 0.58rem; font-weight: 600;
-      padding: 0.07rem 0.26rem;
+      font-size: 0.72rem; font-weight: 600;
+      padding: 0.1rem 0.32rem;
       border-radius: 0.2rem;
       background: rgba(255,255,255,0.8);
       border: 1px solid rgba(0,0,0,0.08);
@@ -170,7 +170,7 @@
     }
     .box-dur {
       margin-top: auto; padding-top: 0.14rem;
-      font-size: 0.48rem; color: var(--muted); font-weight: 700;
+      font-size: 0.62rem; color: var(--muted); font-weight: 700;
       border-top: 1px dashed rgba(0,0,0,0.1);
     }
   </style>
@@ -190,7 +190,7 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_g5vT44r3MXOoMdD_4MjeT0tf4luvbt_7AGUHx4cS0cx0aWFFAYlUiRAx5oAUB_gtFst5Ncy8pkc/pub?output=csv';
 
-const DAY_H = 30;
+const DAY_H = 38;
 const DAYS  = ['일','월','화','수','목','금','토'];
 const HDR   = 1;
 
