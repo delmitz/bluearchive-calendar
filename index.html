@@ -10,16 +10,18 @@
       --border-lt: #e2eaf3;
       --muted:     #94a3b8;
       --text:      #1e293b;
-      --day-h:     38px;
+      --day-h:     22px;
 
       --c-event:  #2563eb;
       --c-pickup: #be185d;
       --c-raid:   #b45309;
+      --c-uc:     #7c3aed;
       --c-camp:   #15803d;
 
       --bg-event:  #e8f0fe;
       --bg-pickup: #fce7f3;
       --bg-raid:   #fef9c3;
+      --bg-uc:     #ede9fe;
       --bg-camp:   #dcfce7;
     }
 
@@ -73,7 +75,7 @@
 
     .sched {
       display: grid;
-      grid-template-columns: 44px 1fr 1fr 1fr 1fr;
+      grid-template-columns: 44px 1fr 1fr 1fr 40px 6rem minmax(110px, 1fr);
       min-width: 340px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
@@ -114,9 +116,9 @@
     }
     .dc.dc-past { opacity: 0.45; }
 
-    .dc-m  { font-size: 0.72rem; color: var(--text);  line-height: 1; font-weight: 800; }
-    .dc-d  { font-size: 1rem;    color: var(--text);  line-height: 1; font-weight: 900; }
-    .dc-dw { font-size: 0.62rem; color: var(--muted); line-height: 1; }
+    .dc-m  { font-size: 0.8rem; color: var(--muted); line-height: 1; font-weight: 700; }
+    .dc-d  { font-size: 0.8rem; color: var(--text);  line-height: 1; font-weight: 800; }
+    .dc-dw { font-size: 0.6rem; color: var(--muted); line-height: 1; }
 
     .today-line {
       grid-column: 1 / -1;
@@ -125,14 +127,14 @@
       pointer-events: none;
     }
     .today-line::before {
-      content: 'TODAY';
+      content: '';
       position: absolute;
-      left: 46px; top: -8px;
-      font-size: 0.65rem; font-weight: 900;
-      color: #fff;
+      left: 38px;
+      transform: translateX(-50%);
+      top: -7px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
       background: var(--c-event);
-      padding: 0.1rem 0.35rem;
-      border-radius: 3px;
     }
 
     .box {
@@ -150,11 +152,21 @@
     .box-event  { background: var(--bg-event);  border: 1.5px solid #93c5fd; border-left: 4px solid var(--c-event);  }
     .box-pickup { background: var(--bg-pickup); border: 1.5px solid #f9a8d4; border-left: 4px solid var(--c-pickup); }
     .box-raid   { background: var(--bg-raid);   border: 1.5px solid #fde047; border-left: 4px solid var(--c-raid);   }
+    .box-uc     { background: var(--bg-uc);     border: 1.5px solid #c4b5fd; border-left: 4px solid var(--c-uc);     }
+    .box-uc .box-kind  { writing-mode: vertical-rl; text-orientation: sideways; margin: -0.35rem -0.45rem 0; padding: 0.2rem 0.15rem; border-radius: 0.45rem 0.45rem 0 0; display: flex; align-items: center; justify-content: center; }
+    .box-uc .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; }
+    .box-uc .box-chars { flex-direction: column; align-items: center; }
+    .box-uc .char      { writing-mode: vertical-rl; text-orientation: sideways; display: flex; align-items: center; justify-content: center; padding: 0.32rem 0.1rem; }
+    .box-uc .box-dur   { writing-mode: vertical-rl; text-orientation: sideways; margin-top: auto; margin-left: auto; margin-right: auto; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.14rem; }
     .box-camp   { background: var(--bg-camp);   border: 1.5px solid #86efac; border-left: 4px solid var(--c-camp);   }
 
     .box-kind {
-      font-size: 0.62rem; font-weight: 700; opacity: 0.6;
-      text-transform: uppercase; letter-spacing: 0.05em;
+      font-size: 0.72rem; font-weight: 800;
+      text-align: center;
+      background: rgba(0,0,0,0.12);
+      margin: -0.35rem -0.45rem 0;
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.45rem 0.45rem 0 0;
     }
     .box-title {
       font-size: 0.82rem; font-weight: 700; line-height: 1.3; color: var(--text);
@@ -190,7 +202,7 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_g5vT44r3MXOoMdD_4MjeT0tf4luvbt_7AGUHx4cS0cx0aWFFAYlUiRAx5oAUB_gtFst5Ncy8pkc/pub?output=csv';
 
-const DAY_H = 38;
+const DAY_H = 22;
 const DAYS  = ['일','월','화','수','목','금','토'];
 const HDR   = 1;
 
@@ -199,17 +211,28 @@ const EVENT_TYPES = new Set(['신규','복각','상설']);
 const COL_MAP = {
   '이벤트':       'event',
   '메인스토리':   'event',
-  '업데이트':     'event',
   '픽업':         'pickup',
   '총력전':       'raid',
   '대결전':       'raid',
-  '제약해제결전': 'raid',
   '종합전술시험': 'raid',
+  '제약해제결전': 'uc',
   '캠페인':       'camp',
+  '업데이트':     'update',
 };
 
-const COL_NUM = { event: 2, pickup: 3, raid: 4, camp: 5 };
-const BOX_CLS = { event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', camp: 'box-camp' };
+const COL_NUM = { event: 2, pickup: 3, raid: 4, uc: 5, camp: 6, update: 7 };
+const BOX_CLS = { event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', uc: 'box-uc', camp: 'box-camp', update: 'box-event' };
+
+const ARMOR_COLORS = {
+  '경':     { bg: '#fee2e2', border: '#fca5a5', accent: '#ef4444' },
+  '중':     { bg: '#fef9c3', border: '#fde047', accent: '#b45309' },
+  '특':     { bg: '#e0f2fe', border: '#7dd3fc', accent: '#0284c7' },
+  '탄':     { bg: '#fdf2f8', border: '#f0abfc', accent: '#c026d3' },
+  '경장갑': { bg: '#fee2e2', border: '#fca5a5', accent: '#ef4444' },
+  '중장갑': { bg: '#fef9c3', border: '#fde047', accent: '#b45309' },
+  '특수장갑':{ bg: '#e0f2fe', border: '#7dd3fc', accent: '#0284c7' },
+  '탄력장갑':{ bg: '#fdf2f8', border: '#f0abfc', accent: '#c026d3' },
+};
 
 // ── Date utilities ────────────────────────────────────────────────────────────
 
@@ -218,42 +241,42 @@ function pd(s) {
   s = String(s).trim().replace(/﻿/g, '');
   if (!s) return null;
   let m, d, y;
-  // YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     [y,m,d] = s.split('-').map(Number);
     return new Date(y, m-1, d);
   }
-  // M/D/YYYY or MM/DD/YYYY (Google Sheets US locale CSV)
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
     [m,d,y] = s.split('/').map(Number);
     return new Date(y, m-1, d);
   }
-  // YYYY/M/D
   if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
     [y,m,d] = s.split('/').map(Number);
     return new Date(y, m-1, d);
   }
-  // YYYY. M. D. (Korean locale Google Sheets)
   const koMatch = s.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/);
   if (koMatch) {
     [, y, m, d] = koMatch.map(Number);
     return new Date(y, m-1, d);
   }
-  // M/D without year
   if (/^\d{1,2}\/\d{1,2}$/.test(s)) {
     [m,d] = s.split('/').map(Number);
-    const now = new Date();
-    y = now.getFullYear();
+    y = new Date().getFullYear();
     const t = new Date(y, m-1, d);
-    if (t < addD(now, -180)) y++;
+    if (t < addD(new Date(), -180)) y++;
+    return new Date(y, m-1, d);
+  }
+  // M월 D일 (요일)
+  const koDay = s.match(/^(\d{1,2})월\s*(\d{1,2})일/);
+  if (koDay) {
+    [, m, d] = koDay.map(Number);
+    y = new Date().getFullYear();
+    const t = new Date(y, m-1, d);
+    if (t < addD(new Date(), -180)) y++;
     return new Date(y, m-1, d);
   }
   return null;
 }
 
-function ds(d) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
 function addD(d, n)  { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
 function diffD(a, b) { return Math.round((a - b) / 86400000); }
 function today0()    { const d = new Date(); d.setHours(0,0,0,0); return d; }
@@ -274,25 +297,23 @@ function parseCSVLine(line) {
 }
 
 async function loadRows() {
-  const res = await fetch(CSV_URL);
+  const noCache = new URLSearchParams(location.search).has('nocache');
+  const url = noCache ? `${CSV_URL}&_t=${Date.now()}` : CSV_URL;
+  const res = await fetch(url, noCache ? { cache: 'no-store' } : {});
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
-  // Strip BOM
   const clean = text.replace(/^﻿/, '');
   const lines = clean.split('\n').filter(l => l.trim());
   if (lines.length < 2) return [];
   const headers = parseCSVLine(lines[0]).map(h => h.trim().replace(/^﻿/, ''));
-  console.log('[CSV] headers:', headers);
-  const all = lines.slice(1).map(line => {
-    const vals = parseCSVLine(line);
-    const row = {};
-    headers.forEach((h, i) => row[h] = (vals[i] || '').trim());
-    return row;
-  });
-  console.log('[CSV] first row raw:', all[0]);
-  const filtered = all.filter(r => r['종류'] && pd(r['한섭시작일자']));
-  console.log(`[CSV] total=${all.length}, valid=${filtered.length}`);
-  return filtered;
+  return lines.slice(1)
+    .map(line => {
+      const vals = parseCSVLine(line);
+      const row = {};
+      headers.forEach((h, i) => row[h] = (vals[i] || '').trim());
+      return row;
+    })
+    .filter(r => r['종류'] && pd(r['한섭시작일자']));
 }
 
 // ── Group same-range pickups into one box ─────────────────────────────────────
@@ -316,10 +337,9 @@ function groupPickups(rows) {
 
 // ── Box content ───────────────────────────────────────────────────────────────
 
-function chip(text, extraStyle) {
+function chip(text) {
   const s = document.createElement('span');
   s.className = 'char';
-  if (extraStyle) s.style.cssText = extraStyle;
   s.textContent = text;
   return s;
 }
@@ -348,6 +368,13 @@ function buildBoxContent(row) {
     return el;
   };
 
+  const mkKind = () => {
+    const el = document.createElement('div');
+    el.className = 'box-kind';
+    el.textContent = kind;
+    return el;
+  };
+
   if (kind === '픽업') {
     frag.appendChild(chipsRow(row._chars || [a1]));
     return frag;
@@ -356,11 +383,8 @@ function buildBoxContent(row) {
   if (kind === '이벤트') {
     frag.appendChild(mkTitle(a1));
     if (EVENT_TYPES.has(a2)) frag.appendChild(chip(a2));
-    // chars: a3 if we used a2 as type, else a2+a3
     const charStr = EVENT_TYPES.has(a2) ? a3 : [a2, a3].filter(Boolean).join(', ');
-    if (charStr) {
-      frag.appendChild(chipsRow(charStr.split(',').map(c => c.trim()).filter(Boolean)));
-    }
+    if (charStr) frag.appendChild(chipsRow(charStr.split(',').map(c => c.trim()).filter(Boolean)));
     return frag;
   }
 
@@ -369,21 +393,25 @@ function buildBoxContent(row) {
     return frag;
   }
 
-  if (kind === '업데이트') {
-    frag.appendChild(mkTitle(a1, 'color:var(--muted)'));
-    return frag;
-  }
-
-  if (kind === '총력전' || kind === '제약해제결전') {
-    frag.appendChild(mkTitle(a1 + (a2 ? ` (${a2})` : '')));
-    const chips = [a3, a5].filter(Boolean);
+  if (kind === '총력전') {
+    frag.appendChild(mkKind());
+    frag.appendChild(mkTitle(a1));
+    const chips = [a2, a5].filter(Boolean);
     if (chips.length) frag.appendChild(chipsRow(chips));
     return frag;
   }
 
+  if (kind === '제약해제결전') {
+    frag.appendChild(mkKind());
+    frag.appendChild(mkTitle(a1));
+    if (a2) frag.appendChild(chipsRow([a2]));
+    return frag;
+  }
+
   if (kind === '대결전') {
-    frag.appendChild(mkTitle(a1 + (a2 ? ` (${a2})` : '')));
-    const chips = [];
+    frag.appendChild(mkKind());
+    frag.appendChild(mkTitle(a1));
+    const chips = [a2].filter(Boolean);
     if (a3 && a4) chips.push(`${a3} / ${a4}`);
     else if (a3) chips.push(a3);
     if (a5) chips.push(a5);
@@ -392,12 +420,14 @@ function buildBoxContent(row) {
   }
 
   if (kind === '종합전술시험') {
+    frag.appendChild(mkKind());
     frag.appendChild(mkTitle(a1));
     return frag;
   }
 
   if (kind === '캠페인') {
-    frag.appendChild(mkTitle([a1, a2].filter(Boolean).join(' · ')));
+    if (a1) frag.appendChild(mkTitle(a1));
+    if (a2) frag.appendChild(mkTitle(a2));
     return frag;
   }
 
@@ -412,15 +442,16 @@ function render(rows) {
   sched.innerHTML = '';
 
   const entries = groupPickups(rows);
-
-  // Grid date range
-  const starts  = entries.map(r => pd(r['한섭시작일자'])).filter(Boolean);
-  const ends    = entries.map(r => pd(r['한섭종료일자'])).filter(Boolean);
-  const allDts  = [...starts, ...ends];
-  const gridStart = addD(new Date(Math.min(...allDts)), -3);
-  const gridEnd   = addD(new Date(Math.max(...allDts)), 7);
-  const totalDays = diffD(gridEnd, gridStart) + 1;
   const todayDate = today0();
+
+  const starts = entries.map(r => pd(r['한섭시작일자'])).filter(Boolean);
+  const ends   = entries.map(r => pd(r['한섭종료일자'])).filter(Boolean);
+  const gridStart = addD(new Date(Math.min(...starts, ...ends)), -3);
+  const viewportDays = Math.ceil(document.getElementById('cal').clientHeight / DAY_H);
+  let gridEnd = addD(new Date(Math.max(...starts, ...ends)), 7);
+  const minEnd = addD(todayDate, viewportDays + 7);
+  if (gridEnd < minEnd) gridEnd = minEnd;
+  const totalDays = diffD(gridEnd, gridStart) + 1;
 
   sched.style.gridAutoRows = `${DAY_H}px`;
 
@@ -429,13 +460,14 @@ function render(rows) {
     return diffD(typeof d === 'string' ? pd(d) : d, gridStart) + HDR + 1;
   };
 
-  // ── Column headers
+  // Column headers
   [
-    { col:1, cls:'ch ch-date',   t:''       },
-    { col:2, cls:'ch ch-event',  t:'이벤트'  },
-    { col:3, cls:'ch ch-pickup', t:'픽업'    },
-    { col:4, cls:'ch ch-raid',   t:'총력전'  },
-    { col:5, cls:'ch ch-camp',   t:'캠페인'  },
+    { col: 1,     cls: 'ch ch-date',   t: ''       },
+    { col: 2,     cls: 'ch ch-event',  t: '이벤트' },
+    { col: 3,     cls: 'ch ch-pickup', t: '픽업'   },
+    { col: '4/6', cls: 'ch ch-raid',   t: '총력전' },
+    { col: 6,     cls: 'ch ch-camp',   t: '캠페인' },
+    { col: 7,     cls: 'ch ch-date',   t: '업데이트' },
   ].forEach(({ col, cls, t }) => {
     const el = document.createElement('div');
     el.className = cls;
@@ -444,27 +476,19 @@ function render(rows) {
     sched.appendChild(el);
   });
 
-  // ── Date column: weekly markers
-  let wk = new Date(gridStart);
+  // Date column: weekly markers on Tuesdays
+  let wk = addD(new Date(gridStart), -((gridStart.getDay() - 2 + 7) % 7));
   while (wk <= gridEnd) {
-    const r0   = toRow(wk);
     const next = addD(wk, 7);
-    const r1   = Math.min(toRow(next), totalDays + HDR + 1);
-    const isPast = next <= todayDate;
-
     const el = document.createElement('div');
-    el.className = 'dc' + (isPast ? ' dc-past' : '');
-    el.style.cssText = `grid-row:${r0}/${r1};`;
-    el.innerHTML = `
-      <span class="dc-m">${wk.getMonth()+1}월</span>
-      <span class="dc-d">${wk.getDate()}</span>
-      <span class="dc-dw">${DAYS[wk.getDay()]}</span>
-    `;
+    el.className = 'dc' + (next <= todayDate ? ' dc-past' : '');
+    el.style.cssText = `grid-row:${toRow(wk)}/${Math.min(toRow(next), totalDays + HDR + 1)};`;
+    el.innerHTML = `<span class="dc-m">${wk.getMonth()+1}월</span><span class="dc-d">${wk.getDate()}</span><span class="dc-dw">${DAYS[wk.getDay()]}</span>`;
     sched.appendChild(el);
     wk = next;
   }
 
-  // ── Today line
+  // Today marker
   const todayRow = toRow(todayDate);
   if (todayRow >= HDR + 1 && todayRow <= totalDays + HDR + 1) {
     const tl = document.createElement('div');
@@ -474,18 +498,19 @@ function render(rows) {
     sched.appendChild(tl);
   }
 
-  // ── Content boxes
+  // Content boxes
   entries.forEach(row => {
-    const colKey = COL_MAP[row['종류']];
+    const kind    = row['종류'];
+    const isPerma = kind === '이벤트' && row['속성2'] === '상설';
+    const colKey  = isPerma ? 'update' : COL_MAP[kind];
     if (!colKey) return;
 
     const startDate = pd(row['한섭시작일자']);
-    let   endDate   = pd(row['한섭종료일자']);
 
-    // Entries with no end: show as 1-day pin (업데이트/메인스토리)
+    let endDate = pd(row['한섭종료일자']);
     if (!endDate) {
-      const pinKinds = new Set(['업데이트', '메인스토리']);
-      endDate = pinKinds.has(row['종류']) ? addD(startDate, 1) : addD(gridEnd, 1);
+      const shortPin = new Set(['메인스토리', '업데이트']);
+      endDate = (shortPin.has(kind) || isPerma) ? addD(startDate, 3) : addD(gridEnd, 1);
     }
 
     const r0 = toRow(startDate);
@@ -499,24 +524,67 @@ function render(rows) {
     el.className = `box ${BOX_CLS[colKey]}` + (isPast ? ' is-past' : '');
     el.style.cssText = `grid-column:${COL_NUM[colKey]};grid-row:${r0}/${r1};`;
 
+    if (kind === '총력전' || kind === '제약해제결전') {
+      const ac = ARMOR_COLORS[row['속성3']];
+      if (ac) {
+        el.style.background = ac.bg;
+        el.style.borderColor = ac.border;
+        el.style.borderLeftColor = ac.accent;
+      }
+    }
+
+    if (kind === '캠페인') {
+      const text = `${row['속성1']} ${row['속성2']}`;
+      const isMission = /임무|특별의뢰/.test(text);
+      const hasThree  = /3/.test(text);
+      if (isMission && hasThree) {
+        el.style.background = '#fed7aa';
+        el.style.borderColor = '#fb923c';
+        el.style.borderLeftColor = '#c2410c';
+      } else if (isMission) {
+        el.style.background = '#ffedd5';
+        el.style.borderColor = '#fdba74';
+        el.style.borderLeftColor = '#ea580c';
+      } else if (hasThree) {
+        el.style.background = '#bbf7d0';
+        el.style.borderColor = '#4ade80';
+        el.style.borderLeftColor = '#15803d';
+      }
+    }
+
     el.appendChild(buildBoxContent(row));
 
     if (dur >= 4) {
       const sd = startDate, ed = addD(endDate, -1);
       const df = document.createElement('div');
       df.className = 'box-dur';
-      df.textContent = `${sd.getMonth()+1}/${sd.getDate()} – ${ed.getMonth()+1}/${ed.getDate()}  (${dur}일)`;
+      const dateStr = `${sd.getMonth()+1}/${sd.getDate()} – ${ed.getMonth()+1}/${ed.getDate()}`;
+      if (colKey === 'uc') {
+        df.textContent = `${dateStr} (${dur}일)`;
+      } else {
+        df.innerHTML = `${dateStr}<br>(${dur}일)`;
+      }
       el.appendChild(df);
     }
 
     sched.appendChild(el);
   });
 
-  // ── Scroll to today
+  // Scroll to top of earliest active card
   requestAnimationFrame(() => {
     const cal = document.getElementById('cal');
-    const px  = (todayRow - (HDR + 1)) * DAY_H;
-    cal.scrollTop = Math.max(0, px - cal.clientHeight * 0.3);
+    const activeStarts = entries
+      .filter(r => {
+        const s = pd(r['한섭시작일자']);
+        let e   = pd(r['한섭종료일자']);
+        if (!e) e = addD(s, 3);
+        return s && e && s <= todayDate && todayDate < e;
+      })
+      .map(r => pd(r['한섭시작일자']));
+    const targetDate = activeStarts.length > 0
+      ? new Date(Math.min(...activeStarts))
+      : todayDate;
+    cal.scrollTop = Math.max(0, (toRow(targetDate) - (HDR + 1)) * DAY_H);
   });
 }
 
@@ -528,7 +596,7 @@ async function init() {
   try {
     const rows = await loadRows();
     if (!rows.length) {
-      loading.textContent = '데이터 없음 — 콘솔(F12)에서 [CSV] 로그를 확인하세요.';
+      loading.textContent = '데이터를 불러오지 못했습니다.';
       return;
     }
     loading.style.display = 'none';
@@ -536,16 +604,14 @@ async function init() {
     render(rows);
   } catch(e) {
     loading.textContent = `로드 실패: ${e.message}`;
-    console.error(e);
   }
 }
 
 document.getElementById('btnToday').addEventListener('click', () => {
-  const el  = document.getElementById('_today');
   const cal = document.getElementById('cal');
+  const el  = document.getElementById('_today');
   if (!el) return;
-  const off = (parseInt(el.style.gridRow) - (HDR + 1)) * DAY_H;
-  cal.scrollTop = Math.max(0, off - cal.clientHeight * 0.3);
+  cal.scrollTop = Math.max(0, (parseInt(el.style.gridRow) - (HDR + 1)) * DAY_H);
 });
 
 init();
