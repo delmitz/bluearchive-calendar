@@ -10,16 +10,18 @@
       --border-lt: #e2eaf3;
       --muted:     #94a3b8;
       --text:      #1e293b;
-      --day-h:     22px;
+      --day-h:     20px;
 
+      --c-story:  #0f766e;
       --c-event:  #2563eb;
-      --c-pickup: #be185d;
+      --c-pickup: #6b7280;
       --c-raid:   #b45309;
       --c-uc:     #7c3aed;
       --c-camp:   #15803d;
 
+      --bg-story:  #f0fdfa;
       --bg-event:  #e8f0fe;
-      --bg-pickup: #fce7f3;
+      --bg-pickup: #f3f4f6;
       --bg-raid:   #fef9c3;
       --bg-uc:     #ede9fe;
       --bg-camp:   #dcfce7;
@@ -75,7 +77,7 @@
 
     .sched {
       display: grid;
-      grid-template-columns: 44px 1fr 1fr 1fr 40px 6rem minmax(110px, 1fr);
+      grid-template-columns: 44px 60px 1fr 1fr 1fr 40px 6rem minmax(110px, 1fr);
       min-width: 340px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
@@ -89,6 +91,7 @@
       border-bottom: 2.5px solid transparent;
     }
     .ch-date   { background: #edf1f7; border-bottom-color: var(--border); }
+    .ch-story  { background: #ccfbf1; color: var(--c-story);  border-bottom-color: var(--c-story);  }
     .ch-event  { background: #dbeafe; color: var(--c-event);  border-bottom-color: var(--c-event);  }
     .ch-pickup { background: #fce7f3; color: var(--c-pickup); border-bottom-color: var(--c-pickup); }
     .ch-raid   { background: #fef9c3; color: var(--c-raid);   border-bottom-color: var(--c-raid);   }
@@ -150,7 +153,23 @@
     .box.is-past { opacity: 0.3; }
 
     .box-event  { background: var(--bg-event);  border: 1.5px solid #93c5fd; border-left: 4px solid var(--c-event);  }
-    .box-pickup { background: var(--bg-pickup); border: 1.5px solid #f9a8d4; border-left: 4px solid var(--c-pickup); }
+    .box-pickup { background: var(--bg-pickup); border: 1.5px solid #d1d5db; border-left: 4px solid var(--c-pickup); }
+    .box-pickup.is-limited { background: #fee2e2; border-color: #fca5a5; border-left-color: #dc2626; }
+    .box-pickup.is-fes     { background: #dcfce7; border-color: #86efac; border-left-color: #16a34a; }
+    .char-limited { color: #991b1b; background: #fee2e2; border-color: #fca5a5; }
+    .char-fes     { color: #166534; background: #dcfce7; border-color: #86efac; }
+    .pickup-sep   { border-top: 1.5px dashed rgba(0,0,0,0.18); margin: 0.2rem 0; }
+    .box-kind-inner {
+      font-size: 0.72rem; font-weight: 800;
+      text-align: center;
+      background: rgba(0,0,0,0.12);
+      margin: 0.18rem -0.45rem;
+      padding: 0.15rem 0.45rem;
+    }
+    .char.char-rerun { background: transparent; border: none; color: rgba(0,0,0,0.4); }
+    .char.char-rerun.char-limited { color: #991b1b; }
+    .char.char-rerun.char-fes     { color: #166534; }
+    .box-pickup.is-rerun-only { background: #f9fafb; border-color: #e5e7eb; border-left-color: #9ca3af; }
     .box-raid   { background: var(--bg-raid);   border: 1.5px solid #fde047; border-left: 4px solid var(--c-raid);   }
     .box-uc     { background: var(--bg-uc);     border: 1.5px solid #c4b5fd; border-left: 4px solid var(--c-uc);     }
     .box-uc .box-kind  { writing-mode: vertical-rl; text-orientation: sideways; margin: -0.35rem -0.45rem 0; padding: 0.2rem 0.15rem; border-radius: 0.45rem 0.45rem 0 0; display: flex; align-items: center; justify-content: center; }
@@ -158,7 +177,12 @@
     .box-uc .box-chars { flex-direction: column; align-items: center; }
     .box-uc .char      { writing-mode: vertical-rl; text-orientation: sideways; display: flex; align-items: center; justify-content: center; padding: 0.32rem 0.1rem; }
     .box-uc .box-dur   { writing-mode: vertical-rl; text-orientation: sideways; margin-top: auto; margin-left: auto; margin-right: auto; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.14rem; }
+    .box-story  { background: var(--bg-story);  border: 1.5px solid #5eead4; border-left: 4px solid var(--c-story); overflow: visible; }
+    .box-story .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; }
+    .box-story .box-dur   { writing-mode: vertical-rl; text-orientation: sideways; margin-top: auto; margin-left: auto; margin-right: auto; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.14rem; }
     .box-camp   { background: var(--bg-camp);   border: 1.5px solid #86efac; border-left: 4px solid var(--c-camp);   }
+    .box-exp    { background: #f0f9ff; border: 1.5px solid #bae6fd; padding: 0.15rem 0.06rem; }
+    .box-exp .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; font-size: 0.6rem; }
 
     .box-kind {
       font-size: 0.72rem; font-weight: 800;
@@ -172,6 +196,7 @@
       font-size: 0.82rem; font-weight: 700; line-height: 1.3; color: var(--text);
     }
     .box-chars { display: flex; flex-wrap: wrap; gap: 0.18rem; }
+    .box-chars-rerun { row-gap: 0.06rem; }
     .char {
       font-size: 0.72rem; font-weight: 600;
       padding: 0.1rem 0.32rem;
@@ -202,7 +227,7 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_g5vT44r3MXOoMdD_4MjeT0tf4luvbt_7AGUHx4cS0cx0aWFFAYlUiRAx5oAUB_gtFst5Ncy8pkc/pub?output=csv';
 
-const DAY_H = 22;
+const DAY_H = 20;
 const DAYS  = ['일','월','화','수','목','금','토'];
 const HDR   = 1;
 
@@ -210,7 +235,7 @@ const EVENT_TYPES = new Set(['신규','복각','상설']);
 
 const COL_MAP = {
   '이벤트':       'event',
-  '메인스토리':   'event',
+  '메인스토리':   'story',
   '픽업':         'pickup',
   '총력전':       'raid',
   '대결전':       'raid',
@@ -220,8 +245,8 @@ const COL_MAP = {
   '업데이트':     'update',
 };
 
-const COL_NUM = { event: 2, pickup: 3, raid: 4, uc: 5, camp: 6, update: 7 };
-const BOX_CLS = { event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', uc: 'box-uc', camp: 'box-camp', update: 'box-event' };
+const COL_NUM = { story: 2, event: 3, pickup: 4, raid: 5, uc: 6, camp: 7, exp: 7, update: 8 };
+const BOX_CLS = { story: 'box-story', event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', uc: 'box-uc', camp: 'box-camp', exp: 'box-exp', update: 'box-event' };
 
 const ARMOR_COLORS = {
   '경':     { bg: '#fee2e2', border: '#fca5a5', accent: '#ef4444' },
@@ -236,45 +261,46 @@ const ARMOR_COLORS = {
 
 // ── Date utilities ────────────────────────────────────────────────────────────
 
+const MIN_DATE = new Date(2021, 0, 1);
+
 function pd(s) {
   if (!s) return null;
   s = String(s).trim().replace(/﻿/g, '');
   if (!s) return null;
-  let m, d, y;
+  let m, d, y, result;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     [y,m,d] = s.split('-').map(Number);
-    return new Date(y, m-1, d);
-  }
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+    result = new Date(y, m-1, d);
+  } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
     [m,d,y] = s.split('/').map(Number);
-    return new Date(y, m-1, d);
-  }
-  if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+    result = new Date(y, m-1, d);
+  } else if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
     [y,m,d] = s.split('/').map(Number);
-    return new Date(y, m-1, d);
+    result = new Date(y, m-1, d);
+  } else {
+    const koMatch = s.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?\s*(?:\([^)]*\))?$/);
+    if (koMatch) {
+      [, y, m, d] = koMatch.map(Number);
+      result = new Date(y, m-1, d);
+    } else if (/^\d{1,2}\/\d{1,2}$/.test(s)) {
+      [m,d] = s.split('/').map(Number);
+      y = new Date().getFullYear();
+      const t = new Date(y, m-1, d);
+      if (t < addD(new Date(), -180)) y++;
+      result = new Date(y, m-1, d);
+    } else {
+      const koDay = s.match(/^(\d{1,2})월\s*(\d{1,2})일/);
+      if (koDay) {
+        [, m, d] = koDay.map(Number);
+        y = new Date().getFullYear();
+        const t = new Date(y, m-1, d);
+        if (t < addD(new Date(), -180)) y++;
+        result = new Date(y, m-1, d);
+      }
+    }
   }
-  const koMatch = s.match(/^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.?$/);
-  if (koMatch) {
-    [, y, m, d] = koMatch.map(Number);
-    return new Date(y, m-1, d);
-  }
-  if (/^\d{1,2}\/\d{1,2}$/.test(s)) {
-    [m,d] = s.split('/').map(Number);
-    y = new Date().getFullYear();
-    const t = new Date(y, m-1, d);
-    if (t < addD(new Date(), -180)) y++;
-    return new Date(y, m-1, d);
-  }
-  // M월 D일 (요일)
-  const koDay = s.match(/^(\d{1,2})월\s*(\d{1,2})일/);
-  if (koDay) {
-    [, m, d] = koDay.map(Number);
-    y = new Date().getFullYear();
-    const t = new Date(y, m-1, d);
-    if (t < addD(new Date(), -180)) y++;
-    return new Date(y, m-1, d);
-  }
-  return null;
+  if (!result || result < MIN_DATE) return null;
+  return result;
 }
 
 function addD(d, n)  { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
@@ -324,15 +350,51 @@ function groupPickups(rows) {
   rows.forEach(row => {
     if (row['종류'] !== '픽업') { out.push(row); return; }
     const key = `${row['한섭시작일자']}|${row['한섭종료일자']}`;
+    const type3 = row['속성3'] || '';
+    const type4 = row['속성4'] || '';
+    const chars = [row['속성1'], row['속성2']].filter(Boolean)
+                    .map(c => ({ name: c, type: type3, rerun: type4 }));
     if (seen[key]) {
-      seen[key]._chars.push(row['속성1']);
+      chars.forEach(c => { if (!seen[key]._chars.find(x => x.name === c.name)) seen[key]._chars.push(c); });
+      if (type3 && !seen[key]._type) seen[key]._type = type3;
+      if (type4 && !seen[key]._rerun) seen[key]._rerun = type4;
     } else {
-      const g = { ...row, _chars: [row['속성1']] };
+      const g = { ...row, _chars: chars, _type: type3, _rerun: type4 };
       seen[key] = g;
       out.push(g);
     }
   });
   return out;
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+
+function buildTooltip(row) {
+  const kind = row['종류'];
+  const a1 = row['속성1'] || '', a2 = row['속성2'] || '';
+  const a3 = row['속성3'] || '', a4 = row['속성4'] || '', a5 = row['속성5'] || '';
+
+  let summary = '';
+  if (kind === '픽업') {
+    const chars = (row._chars || []).map(c => c.name).filter(Boolean);
+    summary = chars.length ? chars.join(', ') : a1;
+  } else if (kind === '캠페인') {
+    summary = [a1, a2, a3, a4].filter(Boolean).join(' · ');
+  } else if (kind === '이벤트' || kind === '메인스토리') {
+    summary = a1;
+  } else {
+    const detail = [a1, a2, a3 && a4 ? `${a3}/${a4}` : a3, a5].filter(Boolean).join(' · ');
+    summary = [kind, detail].filter(Boolean).join(' ');
+  }
+
+  const fmt = s => s ? s.replace(/-/g, '/') : null;
+  const jpS = fmt(row['일섭시작일자']), jpE = fmt(row['일섭종료일자']);
+  const krS = fmt(row['한섭시작일자']), krE = fmt(row['한섭종료일자']);
+  const lines = [];
+  if (summary) lines.push(summary);
+  if (jpS) lines.push(`JP: ${jpS}~${jpE || '?'}`);
+  if (krS) lines.push(`KR: ${krS}~${krE || '?'}`);
+  return lines.join('\n');
 }
 
 // ── Box content ───────────────────────────────────────────────────────────────
@@ -376,7 +438,47 @@ function buildBoxContent(row) {
   };
 
   if (kind === '픽업') {
-    frag.appendChild(chipsRow(row._chars || [a1]));
+    const chars = row._chars || [{ name: a1, type: '', rerun: '' }];
+    const newChars    = chars.filter(c => !c.rerun);
+    const rerunChars  = chars.filter(c =>  c.rerun);
+    const makeChips = (list, extraClass) => {
+      const wrap = document.createElement('div');
+      wrap.className = extraClass === 'char-rerun' ? 'box-chars box-chars-rerun' : 'box-chars';
+      list.forEach(c => {
+        const el = chip(c.name || c);
+        const t = c.type || '';
+        if (t === '한정') el.classList.add('char-limited');
+        else if (t === '페스') el.classList.add('char-fes');
+        if (extraClass) el.classList.add(extraClass);
+        wrap.appendChild(el);
+      });
+      return wrap;
+    };
+    const typeOrder = ['한정', '페스', ''];
+    let isFirst = true;
+    if (newChars.length) {
+      const groups = {};
+      newChars.forEach(c => { (groups[c.type||''] ??= []).push(c); });
+      typeOrder.filter(t => groups[t]).forEach(t => {
+        if (t) {
+          const label = document.createElement('div');
+          label.className = isFirst ? 'box-kind' : 'box-kind-inner';
+          label.textContent = t;
+          frag.appendChild(label);
+        }
+        frag.appendChild(makeChips(groups[t]));
+        isFirst = false;
+      });
+    }
+    if (rerunChars.length) {
+      if (newChars.length) {
+        const sep = document.createElement('div');
+        sep.className = 'pickup-sep';
+        frag.appendChild(sep);
+      }
+      const sortedRerun = typeOrder.flatMap(t => rerunChars.filter(c => (c.type||'') === t));
+      frag.appendChild(makeChips(sortedRerun, 'char-rerun'));
+    }
     return frag;
   }
 
@@ -389,7 +491,17 @@ function buildBoxContent(row) {
   }
 
   if (kind === '메인스토리') {
-    frag.appendChild(mkTitle(a1, 'font-style:italic'));
+    const el = document.createElement('div');
+    el.className = 'box-title';
+    const match = a1.match(/^(.*\d+장)([\s\S]*)$/);
+    if (match && match[2].trim()) {
+      el.appendChild(document.createTextNode(match[1]));
+      el.appendChild(document.createElement('br'));
+      el.appendChild(document.createTextNode(match[2].trim()));
+    } else {
+      el.textContent = a1;
+    }
+    frag.appendChild(el);
     return frag;
   }
 
@@ -426,6 +538,10 @@ function buildBoxContent(row) {
   }
 
   if (kind === '캠페인') {
+    if (a1 === '경험치' && !a2) {
+      frag.appendChild(mkTitle(a1));
+      return frag;
+    }
     if (a1) frag.appendChild(mkTitle(a1));
     if (a2) frag.appendChild(mkTitle(a2));
     return frag;
@@ -462,12 +578,13 @@ function render(rows) {
 
   // Column headers
   [
-    { col: 1,     cls: 'ch ch-date',   t: ''       },
-    { col: 2,     cls: 'ch ch-event',  t: '이벤트' },
-    { col: 3,     cls: 'ch ch-pickup', t: '픽업'   },
-    { col: '4/6', cls: 'ch ch-raid',   t: '총력전' },
-    { col: 6,     cls: 'ch ch-camp',   t: '캠페인' },
-    { col: 7,     cls: 'ch ch-date',   t: '업데이트' },
+    { col: 1,     cls: 'ch ch-date',   t: ''         },
+    { col: 2,     cls: 'ch ch-story',  t: '스토리'   },
+    { col: 3,     cls: 'ch ch-event',  t: '이벤트'   },
+    { col: 4,     cls: 'ch ch-pickup', t: '픽업'     },
+    { col: '5/7', cls: 'ch ch-raid',   t: '총력전'   },
+    { col: 7,     cls: 'ch ch-camp',   t: '캠페인'   },
+    { col: 8,     cls: 'ch ch-date',   t: '업데이트' },
   ].forEach(({ col, cls, t }) => {
     const el = document.createElement('div');
     el.className = cls;
@@ -498,19 +615,43 @@ function render(rows) {
     sched.appendChild(tl);
   }
 
+  // Pre-compute which camp cards need offset (overlap detection)
+  const campRows = entries.filter(r =>
+    r['종류'] === '캠페인' && !((r['속성1']||'') === '경험치' && !(r['속성2']||'').trim())
+  );
+  const shiftedCamp = new Set();
+  for (let i = 0; i < campRows.length; i++) {
+    for (let j = i + 1; j < campRows.length; j++) {
+      const [a, b] = [campRows[i], campRows[j]];
+      const as = pd(a['한섭시작일자']), ae = pd(a['한섭종료일자']);
+      const bs = pd(b['한섭시작일자']), be = pd(b['한섭종료일자']);
+      if (!as || !ae || !bs || !be) continue;
+      if (as < be && bs < ae && as.getTime() !== bs.getTime())
+        shiftedCamp.add(bs > as ? b : a);
+    }
+  }
+
   // Content boxes
   entries.forEach(row => {
     const kind    = row['종류'];
     const isPerma = kind === '이벤트' && row['속성2'] === '상설';
-    const colKey  = isPerma ? 'update' : COL_MAP[kind];
+    const isExp   = kind === '캠페인' && (row['속성1'] || '') === '경험치' && !(row['속성2'] || '').trim();
+    const colKey  = isPerma ? 'update' : (isExp ? 'exp' : COL_MAP[kind]);
     if (!colKey) return;
 
     const startDate = pd(row['한섭시작일자']);
 
     let endDate = pd(row['한섭종료일자']);
     if (!endDate) {
-      const shortPin = new Set(['메인스토리', '업데이트']);
-      endDate = (shortPin.has(kind) || isPerma) ? addD(startDate, 3) : addD(gridEnd, 1);
+      if (kind === '메인스토리') {
+        const textLen = (row['속성1'] || '').length;
+        const neededDays = Math.ceil((13 * textLen + 16) / (0.6 * DAY_H));
+        endDate = addD(startDate, Math.max(7, neededDays));
+      }
+      else {
+        const shortPin = new Set(['업데이트']);
+        endDate = (shortPin.has(kind) || isPerma) ? addD(startDate, 3) : addD(gridEnd, 1);
+      }
     }
 
     const r0 = toRow(startDate);
@@ -521,15 +662,57 @@ function render(rows) {
     const isPast = endDate <= todayDate;
 
     const el = document.createElement('div');
-    el.className = `box ${BOX_CLS[colKey]}` + (isPast ? ' is-past' : '');
+    let cls = `box ${BOX_CLS[colKey]}` + (isPast ? ' is-past' : '');
+    if (kind === '픽업') {
+      const chars    = row._chars || [];
+      const hasNew   = chars.some(c => !c.rerun);
+      const hasRerun = chars.some(c =>  c.rerun);
+      if (!hasNew && hasRerun) {
+        cls += ' is-rerun-only';
+      } else if (hasNew) {
+        const newTypes = chars.filter(c => !c.rerun).map(c => c.type);
+        if (newTypes.includes('페스'))      cls += ' is-fes';
+        else if (newTypes.includes('한정')) cls += ' is-limited';
+      }
+    }
+    el.className = cls;
+    el.title = buildTooltip(row);
     el.style.cssText = `grid-column:${COL_NUM[colKey]};grid-row:${r0}/${r1};`;
+    if (colKey === 'update') el.dataset.update = r0;
+    if (colKey === 'story')  el.dataset.story  = r0;
+    if (colKey === 'exp') {
+      el.style.width = '18px';
+      el.style.justifySelf = 'end';
+      el.style.zIndex = '30';
+    }
+    if (colKey === 'camp' && shiftedCamp.has(row)) {
+      el.style.width = '75%';
+      el.style.justifySelf = 'end';
+      el.style.zIndex = '25';
+    }
 
-    if (kind === '총력전' || kind === '제약해제결전') {
+    if (kind === '총력전' || kind === '제약해제결전' || kind === '종합전술시험') {
       const ac = ARMOR_COLORS[row['속성3']];
       if (ac) {
         el.style.background = ac.bg;
         el.style.borderColor = ac.border;
         el.style.borderLeftColor = ac.accent;
+      }
+    }
+
+    if (kind === '대결전') {
+      const a3 = row['속성3'] || '';
+      if (a3.length === 1) {
+        const ac = ARMOR_COLORS[a3];
+        if (ac) {
+          el.style.background = ac.bg;
+          el.style.borderColor = ac.border;
+          el.style.borderLeftColor = ac.accent;
+        }
+      } else if (a3.length > 1) {
+        el.style.background = '#fff7ed';
+        el.style.borderColor = '#fed7aa';
+        el.style.borderLeftColor = '#ea580c';
       }
     }
 
@@ -554,7 +737,7 @@ function render(rows) {
 
     el.appendChild(buildBoxContent(row));
 
-    if (dur >= 4) {
+    if (dur >= 4 && colKey !== 'story' && colKey !== 'exp') {
       const sd = startDate, ed = addD(endDate, -1);
       const df = document.createElement('div');
       df.className = 'box-dur';
@@ -568,6 +751,39 @@ function render(rows) {
     }
 
     sched.appendChild(el);
+  });
+
+  // Resize update cards to fit their content
+  requestAnimationFrame(() => {
+    sched.querySelectorAll('[data-update]').forEach(el => {
+      const r0 = parseInt(el.dataset.update);
+      const needed = Math.ceil(el.scrollHeight / DAY_H);
+      if (needed > 0) el.style.gridRow = `${r0}/${r0 + needed}`;
+    });
+
+    // Resize story cards to fit rendered text height
+    sched.querySelectorAll('[data-story]').forEach(el => {
+      const r0 = parseInt(el.dataset.story);
+      const titleEl = el.querySelector('.box-title');
+      if (!titleEl) return;
+      let maxH = 0;
+      titleEl.childNodes.forEach(node => {
+        if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return;
+        const range = document.createRange();
+        range.selectNode(node);
+        const rect = range.getBoundingClientRect();
+        if (rect.height > maxH) maxH = rect.height;
+      });
+      if (maxH === 0) maxH = titleEl.textContent.length * 17;
+      const padPx = parseFloat(getComputedStyle(el).paddingTop) + parseFloat(getComputedStyle(el).paddingBottom);
+      const textRows  = Math.max(3, Math.ceil((maxH + padPx) / DAY_H));
+      const fadeRows  = 2;
+      const totalRows = textRows + fadeRows;
+      const gradPct   = Math.round(textRows / totalRows * 100);
+      el.style.gridRow = `${r0}/${r0 + totalRows}`;
+      el.style.webkitMaskImage = `linear-gradient(to bottom, black ${gradPct}%, transparent)`;
+      el.style.maskImage        = `linear-gradient(to bottom, black ${gradPct}%, transparent)`;
+    });
   });
 
   // Scroll to top of earliest active card
