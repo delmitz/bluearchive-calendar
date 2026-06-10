@@ -806,6 +806,12 @@ function render(rows) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+let _cachedRows = null;
+
+function rerender() {
+  if (_cachedRows) render(_cachedRows);
+}
+
 async function init() {
   const loading = document.getElementById('loading');
   const sched   = document.getElementById('sched');
@@ -815,9 +821,17 @@ async function init() {
       loading.textContent = '데이터를 불러오지 못했습니다.';
       return;
     }
+    _cachedRows = rows;
     loading.style.display = 'none';
     sched.style.display = '';
     render(rows);
+
+    // 10분마다 재렌더링 (오늘 마커 위치 갱신)
+    setInterval(rerender, 10 * 60 * 1000);
+    // 탭이 다시 활성화될 때도 재렌더링
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) rerender();
+    });
   } catch(e) {
     loading.textContent = `로드 실패: ${e.message}`;
   }
