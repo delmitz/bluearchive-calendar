@@ -249,6 +249,18 @@
       width: 4px; height: 4px;
       box-shadow: 0 0 0 2px var(--page-bg), 0 0 0 4px var(--lc, #888), 0 0 0 6px var(--page-bg);
     }
+    /* ── Chain highlight ── */
+    .sched.hl-active .bar-line:not(.hl-selected),
+    .sched.hl-active .lane-connector:not(.hl-selected),
+    .sched.hl-active .content-box:not(.hl-selected),
+    .sched.hl-active .junction-dot:not(.hl-selected),
+    .sched.hl-active .end-dot:not(.hl-selected) { opacity: 0.2; }
+    .sched.hl-active .bar-line.hl-selected,
+    .sched.hl-active .lane-connector.hl-selected,
+    .sched.hl-active .content-box.hl-selected,
+    .sched.hl-active .junction-dot.hl-selected,
+    .sched.hl-active .end-dot.hl-selected { opacity: 1; }
+    .content-box { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -568,19 +580,26 @@ function render(rows) {
     }
   });
 
-  // isDashed: alternate solid/dashed only within consecutive handoff chains
+  // isDashed + chain ID assignment
+  let nextChainId = 0;
+  const gChain = new Map();
   Object.values(byLane).forEach(laneGrps => {
     laneGrps.sort((a, b) => a.start - b.start);
     let chainCount = 0;
+    let currentChainId = -1;
     laneGrps.forEach(g => {
       const inChain = noEndDot.has(g) || handoffStart.has(g);
       if (!inChain) {
         g.isDashed = false;
         chainCount = 0;
+        gChain.set(g, nextChainId++);
+        currentChainId = -1;
       } else {
+        if (!handoffStart.has(g)) currentChainId = nextChainId++;
+        gChain.set(g, currentChainId);
         g.isDashed = chainCount % 2 === 1;
         chainCount++;
-        if (handoffStart.has(g) && !noEndDot.has(g)) chainCount = 0; // end of chain
+        if (handoffStart.has(g) && !noEndDot.has(g)) chainCount = 0;
       }
     });
   });
@@ -662,6 +681,7 @@ function render(rows) {
         'linear-gradient(to right, black 1px, transparent 1px, transparent 2px, black 2px)';
     }
 
+    el.dataset.chain = gChain.get(g);
     el.title = g.rows.map(r => buildTooltip(r)).join('\n---\n');
     sched.appendChild(el);
   });
@@ -675,6 +695,7 @@ function render(rows) {
     dot.className = 'junction-dot' +
       (!g.isDashed ? ' dashed-start' : '') +
       (endR(g) <= todayDate ? ' is-past' : '');
+    dot.dataset.chain = gChain.get(g);
     dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${jRow};`;
     dot.style.setProperty('--lc', lc);
     sched.appendChild(dot);
@@ -687,6 +708,7 @@ function render(rows) {
     const lc   = laneColor(g.lane);
     const dot  = document.createElement('div');
     dot.className = 'end-dot' + (endR(g) <= todayDate ? ' is-past' : '');
+    dot.dataset.chain = gChain.get(g);
     dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${eRow};`;
     dot.style.setProperty('--lc', lc);
     sched.appendChild(dot);
@@ -740,6 +762,7 @@ function render(rows) {
       ? `linear-gradient(to bottom, ${lc} 1px, transparent 1px, transparent 2px, ${lc} 2px)`
       : lc;
     const ml = hasCurve ? 'calc(var(--day-h) / 2 + 8px)' : '8px';
+    conn.dataset.chain = gChain.get(g);
     conn.style.cssText =
       `grid-column:${laneCol}/${contentCol};grid-row:${r0};margin-left:${ml};background:${connBg};`;
     conn.style.setProperty('--lc', lc);
@@ -748,6 +771,7 @@ function render(rows) {
     // Content box
     const box = document.createElement('div');
     box.className = 'content-box' + (isPast ? ' is-past' : '');
+    box.dataset.chain = gChain.get(g);
     box.style.cssText =
       `grid-column:${contentCol};grid-row:${r0}/${r1};` +
       `background-color:var(--page-bg);background-image:linear-gradient(${bg},${bg});` +
@@ -785,6 +809,19 @@ function render(rows) {
 
     sched.appendChild(box);
   });
+
+  // Click-to-highlight: clicking a card highlights its chain
+  sched.addEventListener('click', e => {
+    const box = e.target.closest('.content-box');
+    const alreadySelected = box && box.classList.contains('hl-selected');
+    sched.querySelectorAll('.hl-selected').forEach(el => el.classList.remove('hl-selected'));
+    sched.classList.remove('hl-active');
+    if (box && !alreadySelected) {
+      const cid = box.dataset.chain;
+      sched.querySelectorAll(`[data-chain="${cid}"]`).forEach(el => el.classList.add('hl-selected'));
+      sched.classList.add('hl-active');
+    }
+  }, { capture: false });
 
   // Scroll to today / earliest active group
   requestAnimationFrame(() => {
