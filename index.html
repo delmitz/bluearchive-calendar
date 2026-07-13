@@ -10,35 +10,57 @@
       --border-lt: #e2eaf3;
       --muted:     #94a3b8;
       --text:      #1e293b;
-      --day-h:     20px;
+      --page-bg:   #ffffff;
+      --date-bg:   #f4f7fb;
+      --outer-bg:  #dde3ec;
+      --day-h:     26px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --border:    #2a3a50;
+        --border-lt: #1a2636;
+        --muted:     #5a7090;
+        --text:      #dde6f0;
+        --page-bg:   #0f172a;
+        --date-bg:   #162035;
+        --outer-bg:  #080e1a;
+      }
+    }
+    :root[data-theme="dark"] {
+      --border:    #2a3a50;
+      --border-lt: #1a2636;
+      --muted:     #5a7090;
+      --text:      #dde6f0;
+      --page-bg:   #0f172a;
+      --date-bg:   #162035;
+      --outer-bg:  #080e1a;
+    }
+    :root[data-theme="light"] {
+      --border:    #c8d3e0;
+      --border-lt: #e2eaf3;
+      --muted:     #94a3b8;
+      --text:      #1e293b;
+      --page-bg:   #ffffff;
+      --date-bg:   #f4f7fb;
+      --outer-bg:  #dde3ec;
+    }
 
-      --c-story:  #0f766e;
-      --c-event:  #2563eb;
-      --c-pickup: #6b7280;
-      --c-raid:   #b45309;
-      --c-uc:     #7c3aed;
-      --c-camp:   #15803d;
-
-      --bg-story:  #f0fdfa;
-      --bg-event:  #e8f0fe;
-      --bg-pickup: #f3f4f6;
-      --bg-raid:   #fef9c3;
-      --bg-uc:     #ede9fe;
-      --bg-camp:   #dcfce7;
+    @media (min-width: 768px) {
+      :root { --day-h: 34px; }
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: #dde3ec; }
+    html, body { height: 100%; background: var(--outer-bg); }
 
     .page {
-      max-width: 640px;
+      max-width: 900px;
       margin: 0 auto;
       height: 100dvh;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #fff;
-      box-shadow: 0 0 24px rgba(0,0,0,0.12);
+      background: var(--page-bg);
+      box-shadow: 0 0 24px rgba(0,0,0,0.15);
     }
 
     header {
@@ -49,15 +71,21 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      background: #fff;
+      background: var(--page-bg);
     }
-    header h1 { font-size: 1.05rem; font-weight: 700; }
+    header h1 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
     .btn {
       font-size: 0.8rem; font-weight: 700;
       padding: 0.27rem 0.75rem;
       border-radius: 9999px;
       border: none; cursor: pointer;
-      background: var(--c-event); color: #fff;
+      background: #2563eb; color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     .cal {
@@ -73,143 +101,131 @@
       height: 100%;
       color: var(--muted);
       font-size: 0.85rem;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
     .sched {
       display: grid;
-      grid-template-columns: 44px 60px 1fr 1fr 1fr 40px 6rem minmax(110px, 1fr);
-      min-width: 640px;
+      grid-auto-rows: var(--day-h);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: var(--text);
     }
 
-    .ch {
-      position: sticky; top: 0; z-index: 200;
-      padding: 0.42rem 0.3rem;
-      font-size: 0.75rem; font-weight: 800; letter-spacing: 0.07em;
-      text-align: center; white-space: nowrap;
-      border-bottom: 2.5px solid transparent;
-    }
-    .ch-date   { background: #edf1f7; border-bottom-color: var(--border); left: 0; z-index: 210; }
-    .ch-story  { background: #ccfbf1; color: var(--c-story);  border-bottom-color: var(--c-story);  }
-    .ch-event  { background: #dbeafe; color: var(--c-event);  border-bottom-color: var(--c-event);  }
-    .ch-pickup { background: #fce7f3; color: var(--c-pickup); border-bottom-color: var(--c-pickup); }
-    .ch-raid   { background: #fef9c3; color: var(--c-raid);   border-bottom-color: var(--c-raid);   }
-    .ch-camp   { background: #dcfce7; color: var(--c-camp);   border-bottom-color: var(--c-camp);   }
-
-    .dc {
+    /* ── Date column ── */
+    .dc-bg {
       grid-column: 1;
+      position: sticky; left: 0; z-index: 55;
+      background: var(--date-bg);
       border-right: 1.5px solid var(--border);
-      position: sticky; left: 0; z-index: 60;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          transparent           0px,
-          transparent           calc(var(--day-h) - 1px),
-          var(--border-lt)      calc(var(--day-h) - 1px),
-          var(--border-lt)      var(--day-h)
-        ),
-        #f4f7fb;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 5px;
-      gap: 1px;
-      overflow: hidden;
     }
-    .dc.dc-past { opacity: 0.45; }
+    .dc-label {
+      grid-column: 1;
+      position: sticky; left: 0; z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem; font-weight: 700;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      overflow: visible;
+      letter-spacing: 0.02em;
+    }
 
-    .dc-m  { font-size: 0.8rem; color: var(--muted); line-height: 1; font-weight: 700; }
-    .dc-d  { font-size: 0.8rem; color: var(--text);  line-height: 1; font-weight: 800; }
-    .dc-dw { font-size: 0.6rem; color: var(--muted); line-height: 1; }
-
-    .today-line {
-      grid-column: 1 / -1;
-      border-top: 2.5px solid var(--c-event);
-      position: relative; z-index: 150;
+    /* ── Lane area ── */
+    .lane-area-end {
+      z-index: 1;
       pointer-events: none;
     }
-    .today-line::before {
+
+    /* ── Lane connector ── */
+    .lane-connector {
+      align-self: center;
+      height: 2px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .lane-connector.is-past { opacity: 0.32; }
+
+    /* ── Content boxes ── */
+    .content-box {
+      margin: 2px 4px 2px 0;
+      border-radius: 0.35rem;
+      padding: 0.15rem 0.45rem;
+      overflow: hidden;
+      border-left: 3px solid transparent;
+      position: relative;
+      z-index: 10;
+    }
+    .content-box.is-past { opacity: 0.32; }
+    .content-item {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.35;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    @media (min-width: 768px) {
+      .content-item { font-size: 0.8rem; }
+    }
+
+    /* ── Today line ── */
+    .today-line {
+      grid-column: 1 / -1;
+      border-top: 1px solid #ef4444;
+      pointer-events: none;
+      align-self: start;
+    }
+
+    /* ── Branch lines ── */
+    .bar-line {
+      justify-self: start;
+      margin-left: 6px;
+      width: 3px;
+      position: relative;
+      z-index: 20;
+      cursor: default;
+    }
+    .bar-line.is-past { opacity: 0.28; }
+    .bar-line::before {
       content: '';
       position: absolute;
-      left: 38px;
+      left: 50%;
       transform: translateX(-50%);
-      top: -7px;
-      width: 12px; height: 12px;
+      top: calc((var(--day-h) - 10px) / 2);
+      width: 10px; height: 10px;
       border-radius: 50%;
-      background: var(--c-event);
+      background: var(--lc, #888);
+      box-shadow: 0 0 0 2px var(--page-bg);
+      mask: none;
+      -webkit-mask: none;
     }
-
-    .box {
-      margin: 2px 3px;
-      border-radius: 0.45rem;
-      padding: 0.35rem 0.45rem;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 0.18rem;
-      position: relative; z-index: 20;
+    .bar-line::after  { display: none; }
+    .bar-line.no-start-dot::before { display: none; }
+    .junction-dot, .end-dot {
+      justify-self: start;
+      margin-left: 6px;
+      width: 4px;
+      position: relative;
+      z-index: 25;
+      pointer-events: none;
     }
-    .box.is-past { opacity: 0.3; }
-
-    .box-event  { background: var(--bg-event);  border: 1.5px solid #93c5fd; border-left: 4px solid var(--c-event);  }
-    .box-pickup { background: var(--bg-pickup); border: 1.5px solid #d1d5db; border-left: 4px solid var(--c-pickup); }
-    .box-pickup.is-limited { background: #fee2e2; border-color: #fca5a5; border-left-color: #dc2626; }
-    .box-pickup.is-fes     { background: #dcfce7; border-color: #86efac; border-left-color: #16a34a; }
-    .char-limited { color: #991b1b; background: #fee2e2; border-color: #fca5a5; }
-    .char-fes     { color: #166534; background: #dcfce7; border-color: #86efac; }
-    .pickup-sep   { border-top: 1.5px dashed rgba(0,0,0,0.18); margin: 0.2rem 0; }
-    .box-kind-inner {
-      font-size: 0.72rem; font-weight: 800;
-      text-align: center;
-      background: rgba(0,0,0,0.12);
-      margin: 0.18rem -0.45rem;
-      padding: 0.15rem 0.45rem;
+    .junction-dot::before, .end-dot::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: calc((var(--day-h) - 10px) / 2);
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--lc, #888);
+      box-shadow: 0 0 0 2px var(--page-bg);
     }
-    .char.char-rerun { background: transparent; border: none; color: rgba(0,0,0,0.4); }
-    .char.char-rerun.char-limited { color: #991b1b; }
-    .char.char-rerun.char-fes     { color: #166534; }
-    .box-pickup.is-rerun-only { background: #f9fafb; border-color: #e5e7eb; border-left-color: #9ca3af; }
-    .box-raid   { background: var(--bg-raid);   border: 1.5px solid #fde047; border-left: 4px solid var(--c-raid);   }
-    .box-uc     { background: var(--bg-uc);     border: 1.5px solid #c4b5fd; border-left: 4px solid var(--c-uc);     }
-    .box-uc .box-kind  { writing-mode: vertical-rl; text-orientation: sideways; margin: -0.35rem -0.45rem 0; padding: 0.2rem 0.15rem; border-radius: 0.45rem 0.45rem 0 0; display: flex; align-items: center; justify-content: center; }
-    .box-uc .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; }
-    .box-uc .box-chars { flex-direction: column; align-items: center; }
-    .box-uc .char      { writing-mode: vertical-rl; text-orientation: sideways; display: flex; align-items: center; justify-content: center; padding: 0.32rem 0.1rem; }
-    .box-uc .box-dur   { writing-mode: vertical-rl; text-orientation: sideways; margin-top: auto; margin-left: auto; margin-right: auto; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.14rem; }
-    .box-story  { background: var(--bg-story);  border: 1.5px solid #5eead4; border-left: 4px solid var(--c-story); overflow: visible; }
-    .box-story .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; }
-    .box-story .box-dur   { writing-mode: vertical-rl; text-orientation: sideways; margin-top: auto; margin-left: auto; margin-right: auto; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.14rem; }
-    .box-camp   { background: var(--bg-camp);   border: 1.5px solid #86efac; border-left: 4px solid var(--c-camp);   }
-    .box-exp    { background: #f0f9ff; border: 1.5px solid #bae6fd; padding: 0.15rem 0.06rem; }
-    .box-exp .box-title { writing-mode: vertical-rl; text-orientation: sideways; align-self: center; margin: 0 auto; font-size: 0.6rem; }
-
-    .box-kind {
-      font-size: 0.72rem; font-weight: 800;
-      text-align: center;
-      background: rgba(0,0,0,0.12);
-      margin: -0.35rem -0.45rem 0;
-      padding: 0.15rem 0.45rem;
-      border-radius: 0.45rem 0.45rem 0 0;
-    }
-    .box-title {
-      font-size: 0.82rem; font-weight: 700; line-height: 1.3; color: var(--text);
-    }
-    .box-chars { display: flex; flex-wrap: wrap; gap: 0.18rem; }
-    .box-chars-rerun { row-gap: 0.06rem; }
-    .char {
-      font-size: 0.72rem; font-weight: 600;
-      padding: 0.1rem 0.32rem;
-      border-radius: 0.2rem;
-      background: rgba(255,255,255,0.8);
-      border: 1px solid rgba(0,0,0,0.08);
-      white-space: nowrap;
-    }
-    .box-dur {
-      margin-top: auto; padding-top: 0.14rem;
-      font-size: 0.62rem; color: var(--muted); font-weight: 700;
-      border-top: 1px dashed rgba(0,0,0,0.1);
-    }
+    .junction-dot.is-past, .end-dot.is-past { opacity: 0.28; }
   </style>
 </head>
 <body>
@@ -227,39 +243,9 @@
 <script>
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_g5vT44r3MXOoMdD_4MjeT0tf4luvbt_7AGUHx4cS0cx0aWFFAYlUiRAx5oAUB_gtFst5Ncy8pkc/pub?output=csv';
 
-const DAY_H = 20;
-const DAYS  = ['일','월','화','수','목','금','토'];
-const HDR   = 1;
+const LANE_COLORS = ['#E6194B', '#3CB44B', '#FFE119', '#4363D8', '#F58231', '#911EB4', '#42D4F4'];
 
-const EVENT_TYPES = new Set(['신규','복각','상설']);
-
-const COL_MAP = {
-  '이벤트':       'event',
-  '메인스토리':   'story',
-  '픽업':         'pickup',
-  '총력전':       'raid',
-  '대결전':       'raid',
-  '종합전술시험': 'raid',
-  '제약해제결전': 'uc',
-  '캠페인':       'camp',
-  '업데이트':     'update',
-};
-
-const COL_NUM = { story: 2, event: 3, pickup: 4, raid: 5, uc: 6, camp: 7, exp: 7, update: 8 };
-const BOX_CLS = { story: 'box-story', event: 'box-event', pickup: 'box-pickup', raid: 'box-raid', uc: 'box-uc', camp: 'box-camp', exp: 'box-exp', update: 'box-event' };
-
-const ARMOR_COLORS = {
-  '경':     { bg: '#fee2e2', border: '#fca5a5', accent: '#ef4444' },
-  '중':     { bg: '#fef9c3', border: '#fde047', accent: '#b45309' },
-  '특':     { bg: '#e0f2fe', border: '#7dd3fc', accent: '#0284c7' },
-  '탄':     { bg: '#fdf2f8', border: '#f0abfc', accent: '#c026d3' },
-  '경장갑': { bg: '#fee2e2', border: '#fca5a5', accent: '#ef4444' },
-  '중장갑': { bg: '#fef9c3', border: '#fde047', accent: '#b45309' },
-  '특수장갑':{ bg: '#e0f2fe', border: '#7dd3fc', accent: '#0284c7' },
-  '탄력장갑':{ bg: '#fdf2f8', border: '#f0abfc', accent: '#c026d3' },
-};
-
-// ── Date utilities ────────────────────────────────────────────────────────────
+// ── Date utilities ─────────────────────────────────────────────────────────────
 
 const MIN_DATE = new Date(2021, 0, 1);
 
@@ -288,15 +274,6 @@ function pd(s) {
       const t = new Date(y, m-1, d);
       if (t < addD(new Date(), -180)) y++;
       result = new Date(y, m-1, d);
-    } else {
-      const koDay = s.match(/^(\d{1,2})월\s*(\d{1,2})일/);
-      if (koDay) {
-        [, m, d] = koDay.map(Number);
-        y = new Date().getFullYear();
-        const t = new Date(y, m-1, d);
-        if (t < addD(new Date(), -180)) y++;
-        result = new Date(y, m-1, d);
-      }
     }
   }
   if (!result || result < MIN_DATE) return null;
@@ -306,8 +283,9 @@ function pd(s) {
 function addD(d, n)  { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
 function diffD(a, b) { return Math.round((a - b) / 86400000); }
 function today0()    { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmtMD(d)    { return `${d.getMonth()+1}/${d.getDate()}`; }
 
-// ── CSV parsing ───────────────────────────────────────────────────────────────
+// ── CSV parsing ────────────────────────────────────────────────────────────────
 
 function parseCSVLine(line) {
   const res = [];
@@ -342,24 +320,24 @@ async function loadRows() {
     .filter(r => r['종류'] && pd(r['한섭시작일자']));
 }
 
-// ── Group same-range pickups into one box ─────────────────────────────────────
+// ── Merge same-range pickups into one row ──────────────────────────────────────
 
 function groupPickups(rows) {
   const out  = [];
   const seen = {};
   rows.forEach(row => {
     if (row['종류'] !== '픽업') { out.push(row); return; }
-    const key = `${row['한섭시작일자']}|${row['한섭종료일자']}`;
+    const key   = `${row['한섭시작일자']}|${row['한섭종료일자']}`;
     const type3 = row['속성3'] || '';
     const type4 = row['속성4'] || '';
     const chars = [row['속성1'], row['속성2']].filter(Boolean)
                     .map(c => ({ name: c, type: type3, rerun: type4 }));
     if (seen[key]) {
-      chars.forEach(c => { if (!seen[key]._chars.find(x => x.name === c.name)) seen[key]._chars.push(c); });
-      if (type3 && !seen[key]._type) seen[key]._type = type3;
-      if (type4 && !seen[key]._rerun) seen[key]._rerun = type4;
+      chars.forEach(c => {
+        if (!seen[key]._chars.find(x => x.name === c.name)) seen[key]._chars.push(c);
+      });
     } else {
-      const g = { ...row, _chars: chars, _type: type3, _rerun: type4 };
+      const g = { ...row, _chars: chars };
       seen[key] = g;
       out.push(g);
     }
@@ -367,247 +345,258 @@ function groupPickups(rows) {
   return out;
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
+// ── Group all rows by (KR start, KR end) date range ───────────────────────────
+
+function groupByRange(rows) {
+  const map = new Map();
+  rows.forEach(row => {
+    const s = row['한섭시작일자'];
+    const e = row['한섭종료일자'];
+    if (!s) return;
+    const startDate = pd(s);
+    if (!startDate) return;
+    let endDate = pd(e);
+    const hasRealEnd = !!endDate;
+    if (!endDate) {
+      const kind = row['종류'];
+      endDate = addD(startDate, (kind === '메인스토리' || kind === '업데이트') ? 3 : 7);
+    }
+    const isoS = startDate.toISOString().slice(0,10);
+    const isoE = endDate.toISOString().slice(0,10);
+    const key = `${isoS}|${isoE}`;
+    if (!map.has(key)) map.set(key, { start: startDate, end: endDate, rows: [], hasRealEnd: false });
+    const grp = map.get(key);
+    if (hasRealEnd) grp.hasRealEnd = true;
+    grp.rows.push(row);
+  });
+  return [...map.values()].sort((a, b) => a.start - b.start || b.end - a.end);
+}
+
+// ── Greedy lane assignment ─────────────────────────────────────────────────────
+
+function assignLanes(groups) {
+  // Lane 0: items without a real end date (fade-out style)
+  // Lanes 1..N: greedy interval scheduling for items with real end dates
+  // Lane N+1 (rightmost): JFD (제약해제결전) forced here
+  const isJFD = g => g.rows.some(r => r['종류'] === '제약해제결전');
+
+  const laneEnds = [new Date(0)]; // lane 0 reserved; never used by greedy
+
+  // Pass 1: greedy for non-lane0, non-JFD groups
+  groups.forEach(g => {
+    if (!g.hasRealEnd) { g.lane = 0; return; }
+    if (isJFD(g)) return;
+    let lane = laneEnds.findIndex((e, i) => i >= 1 && e <= g.start);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = g.end;
+    g.lane = lane;
+  });
+
+  // Pass 2: JFD fixed to rightmost lane (one beyond greedy max)
+  const jfdLane = laneEnds.length;
+  groups.forEach(g => {
+    if (g.hasRealEnd && isJFD(g)) g.lane = jfdLane;
+  });
+
+  const numLanes = Math.max(4, jfdLane + 1);
+  return { groups, numLanes };
+}
+
+// ── Lane color helpers ─────────────────────────────────────────────────────────
+
+function laneColor(lane) {
+  return LANE_COLORS[lane % LANE_COLORS.length];
+}
+
+function laneColorBg(lc) {
+  const r = parseInt(lc.slice(1, 3), 16);
+  const g = parseInt(lc.slice(3, 5), 16);
+  const b = parseInt(lc.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},0.10)`;
+}
+
+// ── Content item text (compact, single line per row) ──────────────────────────
+
+function makeItemText(row) {
+  const k  = row['종류'];
+  const a1 = (row['속성1'] || '').trim();
+  const a2 = (row['속성2'] || '').trim();
+  const a3 = (row['속성3'] || '').trim();
+  const a4 = (row['속성4'] || '').trim();
+  const a5 = (row['속성5'] || '').trim();
+
+  if (k === '픽업') {
+    const chars = row._chars || [{ name: a1, type: a3, rerun: a4 }];
+    const parts = chars.map(c => {
+      let s = c.name;
+      if (c.type === '한정' || c.type === '페스') s += `(${c.type})`;
+      if (c.rerun) s += ' ↩';
+      return s;
+    });
+    return `[픽업] ${parts.join(' · ')}`;
+  }
+  if (k === '이벤트') {
+    const sub = (a2 && a2 !== '신규') ? ` (${a2})` : '';
+    return `[이벤트] ${a1}${sub}`;
+  }
+  if (k === '메인스토리') return `[스토리] ${a1}`;
+  if (k === '총력전') {
+    const detail = [a3, a5].filter(Boolean).join(' ');
+    return `[총력전] ${a1}${detail ? ' ' + detail : ''}`;
+  }
+  if (k === '대결전') {
+    const armor = (a3 && a4) ? `${a3}/${a4}` : a3;
+    const detail = [a2, armor, a5].filter(Boolean).join(' ');
+    return `[대결전] ${a1}${detail ? ' ' + detail : ''}`;
+  }
+  if (k === '제약해제결전') return `[제약해제] ${a1}${a3 ? ' ' + a3 : ''}`;
+  if (k === '종합전술시험') return `[시험] ${a1}`;
+  if (k === '캠페인') return `[캠페인] ${[a1, a2].filter(Boolean).join(' ')}`;
+  if (k === '업데이트') return `[업데이트] ${a1}`;
+  return `[${k}] ${a1}`;
+}
+
+// ── Tooltip (shown on hover) ───────────────────────────────────────────────────
 
 function buildTooltip(row) {
   const kind = row['종류'];
-  const a1 = row['속성1'] || '', a2 = row['속성2'] || '';
+  const a1 = row['속성1'] || '';
   const a3 = row['속성3'] || '', a4 = row['속성4'] || '', a5 = row['속성5'] || '';
 
   let summary = '';
   if (kind === '픽업') {
     const chars = (row._chars || []).map(c => c.name).filter(Boolean);
     summary = chars.length ? chars.join(', ') : a1;
-  } else if (kind === '캠페인') {
-    summary = [a1, a2, a3, a4].filter(Boolean).join(' · ');
   } else if (kind === '이벤트' || kind === '메인스토리') {
     summary = a1;
   } else {
-    const detail = [a1, a2, a3 && a4 ? `${a3}/${a4}` : a3, a5].filter(Boolean).join(' · ');
+    const detail = [a1, a3 && a4 ? `${a3}/${a4}` : a3, a5].filter(Boolean).join(' · ');
     summary = [kind, detail].filter(Boolean).join(' ');
   }
 
   const fmt = s => s ? s.replace(/-/g, '/') : null;
-  const jpS = fmt(row['일섭시작일자']), jpE = fmt(row['일섭종료일자']);
-  const krS = fmt(row['한섭시작일자']), krE = fmt(row['한섭종료일자']);
   const lines = [];
   if (summary) lines.push(summary);
+  const jpS = fmt(row['일섭시작일자']), jpE = fmt(row['일섭종료일자']);
+  const krS = fmt(row['한섭시작일자']), krE = fmt(row['한섭종료일자']);
   if (jpS) lines.push(`JP: ${jpS}~${jpE || '?'}`);
   if (krS) lines.push(`KR: ${krS}~${krE || '?'}`);
   return lines.join('\n');
 }
 
-// ── Box content ───────────────────────────────────────────────────────────────
-
-function chip(text) {
-  const s = document.createElement('span');
-  s.className = 'char';
-  s.textContent = text;
-  return s;
-}
-
-function chipsRow(texts) {
-  const wrap = document.createElement('div');
-  wrap.className = 'box-chars';
-  texts.forEach(t => wrap.appendChild(chip(t)));
-  return wrap;
-}
-
-function buildBoxContent(row) {
-  const kind = row['종류'];
-  const a1 = row['속성1'] || '';
-  const a2 = row['속성2'] || '';
-  const a3 = row['속성3'] || '';
-  const a4 = row['속성4'] || '';
-  const a5 = row['속성5'] || '';
-  const frag = document.createDocumentFragment();
-
-  const mkTitle = (text, style) => {
-    const el = document.createElement('div');
-    el.className = 'box-title';
-    if (style) el.style.cssText = style;
-    el.textContent = text;
-    return el;
-  };
-
-  const mkKind = () => {
-    const el = document.createElement('div');
-    el.className = 'box-kind';
-    el.textContent = kind;
-    return el;
-  };
-
-  if (kind === '픽업') {
-    const chars = row._chars || [{ name: a1, type: '', rerun: '' }];
-    const newChars    = chars.filter(c => !c.rerun);
-    const rerunChars  = chars.filter(c =>  c.rerun);
-    const makeChips = (list, extraClass) => {
-      const wrap = document.createElement('div');
-      wrap.className = extraClass === 'char-rerun' ? 'box-chars box-chars-rerun' : 'box-chars';
-      list.forEach(c => {
-        const el = chip(c.name || c);
-        const t = c.type || '';
-        if (t === '한정') el.classList.add('char-limited');
-        else if (t === '페스') el.classList.add('char-fes');
-        if (extraClass) el.classList.add(extraClass);
-        wrap.appendChild(el);
-      });
-      return wrap;
-    };
-    const typeOrder = ['한정', '페스', ''];
-    let isFirst = true;
-    if (newChars.length) {
-      const groups = {};
-      newChars.forEach(c => { (groups[c.type||''] ??= []).push(c); });
-      typeOrder.filter(t => groups[t]).forEach(t => {
-        if (t) {
-          const label = document.createElement('div');
-          label.className = isFirst ? 'box-kind' : 'box-kind-inner';
-          label.textContent = t;
-          frag.appendChild(label);
-        }
-        frag.appendChild(makeChips(groups[t]));
-        isFirst = false;
-      });
-    }
-    if (rerunChars.length) {
-      if (newChars.length) {
-        const sep = document.createElement('div');
-        sep.className = 'pickup-sep';
-        frag.appendChild(sep);
-      }
-      const sortedRerun = typeOrder.flatMap(t => rerunChars.filter(c => (c.type||'') === t));
-      frag.appendChild(makeChips(sortedRerun, 'char-rerun'));
-    }
-    return frag;
-  }
-
-  if (kind === '이벤트') {
-    frag.appendChild(mkTitle(a1));
-    if (EVENT_TYPES.has(a2)) frag.appendChild(chip(a2));
-    const charStr = EVENT_TYPES.has(a2) ? a3 : [a2, a3].filter(Boolean).join(', ');
-    if (charStr) frag.appendChild(chipsRow(charStr.split(',').map(c => c.trim()).filter(Boolean)));
-    return frag;
-  }
-
-  if (kind === '메인스토리') {
-    const el = document.createElement('div');
-    el.className = 'box-title';
-    const match = a1.match(/^(.*\d+장)([\s\S]*)$/);
-    if (match && match[2].trim()) {
-      el.appendChild(document.createTextNode(match[1]));
-      el.appendChild(document.createElement('br'));
-      el.appendChild(document.createTextNode(match[2].trim()));
-    } else {
-      el.textContent = a1;
-    }
-    frag.appendChild(el);
-    return frag;
-  }
-
-  if (kind === '총력전') {
-    frag.appendChild(mkKind());
-    frag.appendChild(mkTitle(a1));
-    const chips = [a2, a5].filter(Boolean);
-    if (chips.length) frag.appendChild(chipsRow(chips));
-    return frag;
-  }
-
-  if (kind === '제약해제결전') {
-    frag.appendChild(mkKind());
-    frag.appendChild(mkTitle(a1));
-    if (a2) frag.appendChild(chipsRow([a2]));
-    return frag;
-  }
-
-  if (kind === '대결전') {
-    frag.appendChild(mkKind());
-    frag.appendChild(mkTitle(a1));
-    const chips = [a2].filter(Boolean);
-    if (a3 && a4) chips.push(`${a3} / ${a4}`);
-    else if (a3) chips.push(a3);
-    if (a5) chips.push(a5);
-    if (chips.length) frag.appendChild(chipsRow(chips));
-    return frag;
-  }
-
-  if (kind === '종합전술시험') {
-    frag.appendChild(mkKind());
-    frag.appendChild(mkTitle(a1));
-    return frag;
-  }
-
-  if (kind === '캠페인') {
-    if (a1 === '경험치' && !a2) {
-      frag.appendChild(mkTitle(a1));
-      return frag;
-    }
-    if (a1) frag.appendChild(mkTitle(a1));
-    if (a2) frag.appendChild(mkTitle(a2));
-    return frag;
-  }
-
-  frag.appendChild(mkTitle(a1));
-  return frag;
-}
-
-// ── Render ────────────────────────────────────────────────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────────
 
 function render(rows) {
+  const DAY_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-h')) || 26;
   const sched = document.getElementById('sched');
   sched.innerHTML = '';
 
-  const entries = groupPickups(rows);
   const todayDate = today0();
 
-  const starts = entries.map(r => pd(r['한섭시작일자'])).filter(Boolean);
-  const ends   = entries.map(r => pd(r['한섭종료일자'])).filter(Boolean);
-  const gridStart = addD(new Date(Math.min(...starts, ...ends)), -3);
+  const { groups, numLanes } = assignLanes(groupByRange(groupPickups(rows)));
+  if (!groups.length) return;
+
+  // Extend lane 0 synthetic ends by fade length (must happen before grid bounds)
+  const lane0s = groups.filter(g => !g.hasRealEnd).sort((a, b) => a.start - b.start);
+  lane0s.forEach((g, i) => {
+    const next = lane0s.find((h, j) => j > i && h.start > g.start);
+    const fadeDays = next ? Math.min(7, diffD(next.start, g.start)) : 7;
+    g._fadePx = fadeDays * DAY_H;
+    g.end = addD(g.end, fadeDays); // extend beyond original synthetic end
+  });
+
+  // CSV end dates are inclusive; endR converts to exclusive for grid/past comparisons
+  const endR = g => g.hasRealEnd ? addD(g.end, 1) : g.end;
+
+  // Grid bounds
+  const allDates  = groups.flatMap(g => [g.start, endR(g)]);
+  const gridStart = addD(new Date(Math.min(...allDates)), -3);
   const viewportDays = Math.ceil(document.getElementById('cal').clientHeight / DAY_H);
-  let gridEnd = addD(new Date(Math.max(...starts, ...ends)), 7);
+  let gridEnd = addD(new Date(Math.max(...allDates)), 7);
   const minEnd = addD(todayDate, viewportDays + 7);
   if (gridEnd < minEnd) gridEnd = minEnd;
   const totalDays = diffD(gridEnd, gridStart) + 1;
+  const ROWS = totalDays + 2;
 
+  // contentCol = column after all lane columns (1 date + numLanes lanes + 1 content)
+  const contentCol = numLanes + 2;
+
+  sched.style.gridTemplateColumns = `20px repeat(${numLanes}, 16px) 1fr`;
   sched.style.gridAutoRows = `${DAY_H}px`;
+  sched.style.minHeight = `${totalDays * DAY_H}px`;
 
-  const toRow = d => {
-    if (!d) return null;
-    return diffD(typeof d === 'string' ? pd(d) : d, gridStart) + HDR + 1;
-  };
+  const toRow    = d => diffD(d, gridStart) + 1;
+  const todayRow = toRow(todayDate);
 
-  // Column headers
-  [
-    { col: 1,     cls: 'ch ch-date',   t: ''         },
-    { col: 2,     cls: 'ch ch-story',  t: '스토리'   },
-    { col: 3,     cls: 'ch ch-event',  t: '이벤트'   },
-    { col: 4,     cls: 'ch ch-pickup', t: '픽업'     },
-    { col: '5/7', cls: 'ch ch-raid',   t: '총력전'   },
-    { col: 7,     cls: 'ch ch-camp',   t: '캠페인'   },
-    { col: 8,     cls: 'ch ch-date',   t: '업데이트' },
-  ].forEach(({ col, cls, t }) => {
-    const el = document.createElement('div');
-    el.className = cls;
-    el.textContent = t;
-    el.style.cssText = `grid-column:${col};grid-row:${HDR};`;
-    sched.appendChild(el);
+  // Handoff detection: consecutive same-lane, same-type groups with touching dates → seamless bar
+  const typeOf = g => g.rows[0]?.['종류'] ?? '';
+  const byLane = {};
+  groups.forEach(g => (byLane[g.lane] ??= []).push(g));
+  const noEndDot    = new Set();
+  const handoffStart = new Set();
+  Object.values(byLane).forEach(laneGrps => {
+    laneGrps.sort((a, b) => a.start - b.start);
+    for (let i = 0; i < laneGrps.length - 1; i++) {
+      if (laneGrps[i].hasRealEnd &&
+          laneGrps[i].end.getTime() === laneGrps[i+1].start.getTime() &&
+          typeOf(laneGrps[i]) === typeOf(laneGrps[i+1])) {
+        noEndDot.add(laneGrps[i]);
+        handoffStart.add(laneGrps[i+1]);
+      }
+    }
   });
 
-  // Date column: weekly markers on Tuesdays
-  let wk = addD(new Date(gridStart), -((gridStart.getDay() - 2 + 7) % 7));
-  while (wk <= gridEnd) {
-    const next = addD(wk, 7);
-    const el = document.createElement('div');
-    el.className = 'dc' + (next <= todayDate ? ' dc-past' : '');
-    el.style.cssText = `grid-row:${toRow(wk)}/${Math.min(toRow(next), totalDays + HDR + 1)};`;
-    el.innerHTML = `<span class="dc-m">${wk.getMonth()+1}월</span><span class="dc-d">${wk.getDate()}</span><span class="dc-dw">${DAYS[wk.getDay()]}</span>`;
-    sched.appendChild(el);
-    wk = next;
-  }
+  // isDashed: alternate solid/dashed only within consecutive handoff chains
+  Object.values(byLane).forEach(laneGrps => {
+    laneGrps.sort((a, b) => a.start - b.start);
+    let chainCount = 0;
+    laneGrps.forEach(g => {
+      const inChain = noEndDot.has(g) || handoffStart.has(g);
+      if (!inChain) {
+        g.isDashed = false;
+        chainCount = 0;
+      } else {
+        g.isDashed = chainCount % 2 === 1;
+        chainCount++;
+        if (handoffStart.has(g) && !noEndDot.has(g)) chainCount = 0; // end of chain
+      }
+    });
+  });
+
+  // Lane area placeholder (for z-ordering)
+  const laneEnd = document.createElement('div');
+  laneEnd.className = 'lane-area-end';
+  laneEnd.style.cssText = `grid-column:2/${contentCol};grid-row:1/${ROWS};`;
+  sched.appendChild(laneEnd);
+
+  // Date column background (sticky)
+  const dcBg = document.createElement('div');
+  dcBg.className = 'dc-bg';
+  dcBg.style.cssText = `grid-row:1/${ROWS};`;
+  sched.appendChild(dcBg);
+
+  // Date labels only at dot positions (no label for synthetic end dates)
+  const labelMap = new Map();
+  groups.forEach(g => {
+    labelMap.set(g.start.getTime(), g.start);
+    if (g.hasRealEnd && !noEndDot.has(g)) {
+      labelMap.set(g.end.getTime(), g.end);
+    }
+  });
+  let prevLabelRow = -Infinity;
+  [...labelMap.values()].sort((a, b) => a - b).forEach(date => {
+    const row = toRow(date);
+    if (row - prevLabelRow < 2) return; // skip if previous label was on adjacent row
+    prevLabelRow = row;
+    const lbl = document.createElement('div');
+    lbl.className = 'dc-label';
+    lbl.style.cssText = `grid-row:${row};`;
+    lbl.textContent = fmtMD(date);
+    sched.appendChild(lbl);
+  });
 
   // Today marker
-  const todayRow = toRow(todayDate);
-  if (todayRow >= HDR + 1 && todayRow <= totalDays + HDR + 1) {
+  if (todayRow >= 1 && todayRow < ROWS) {
     const tl = document.createElement('div');
     tl.id = '_today';
     tl.className = 'today-line';
@@ -615,196 +604,169 @@ function render(rows) {
     sched.appendChild(tl);
   }
 
-  // Pre-compute which camp cards need offset (overlap detection)
-  const campRows = entries.filter(r =>
-    r['종류'] === '캠페인' && !((r['속성1']||'') === '경험치' && !(r['속성2']||'').trim())
-  );
-  const shiftedCamp = new Set();
-  for (let i = 0; i < campRows.length; i++) {
-    for (let j = i + 1; j < campRows.length; j++) {
-      const [a, b] = [campRows[i], campRows[j]];
-      const as = pd(a['한섭시작일자']), ae = pd(a['한섭종료일자']);
-      const bs = pd(b['한섭시작일자']), be = pd(b['한섭종료일자']);
-      if (!as || !ae || !bs || !be) continue;
-      if (as < be && bs < ae && as.getTime() !== bs.getTime())
-        shiftedCamp.add(bs > as ? b : a);
-    }
-  }
+  // Branch lines
+  groups.forEach(g => {
+    const r0 = toRow(g.start);
+    const r1 = toRow(endR(g));
+    if (r0 >= r1) return;
 
-  // Content boxes
-  entries.forEach(row => {
-    const kind    = row['종류'];
-    const isPerma = kind === '이벤트' && row['속성2'] === '상설';
-    const isExp   = kind === '캠페인' && (row['속성1'] || '') === '경험치' && !(row['속성2'] || '').trim();
-    const colKey  = isPerma ? 'update' : (isExp ? 'exp' : COL_MAP[kind]);
-    if (!colKey) return;
-
-    const startDate = pd(row['한섭시작일자']);
-
-    let endDate = pd(row['한섭종료일자']);
-    if (!endDate) {
-      if (kind === '메인스토리') {
-        const textLen = (row['속성1'] || '').length;
-        const neededDays = Math.ceil((13 * textLen + 16) / (0.6 * DAY_H));
-        endDate = addD(startDate, Math.max(7, neededDays));
-      }
-      else {
-        const shortPin = new Set(['업데이트']);
-        endDate = (shortPin.has(kind) || isPerma) ? addD(startDate, 3) : addD(gridEnd, 1);
-      }
-    }
-
-    const r0 = toRow(startDate);
-    const r1 = toRow(endDate);
-    if (!r0 || r0 >= r1) return;
-
-    const dur    = diffD(endDate, startDate);
-    const isPast = endDate <= todayDate;
+    const col    = g.lane + 2;
+    const lc     = laneColor(g.lane);
+    const isPast = endR(g) <= todayDate;
 
     const el = document.createElement('div');
-    let cls = `box ${BOX_CLS[colKey]}` + (isPast ? ' is-past' : '');
-    if (kind === '픽업') {
-      const chars    = row._chars || [];
-      const hasNew   = chars.some(c => !c.rerun);
-      const hasRerun = chars.some(c =>  c.rerun);
-      if (!hasNew && hasRerun) {
-        cls += ' is-rerun-only';
-      } else if (hasNew) {
-        const newTypes = chars.filter(c => !c.rerun).map(c => c.type);
-        if (newTypes.includes('페스'))      cls += ' is-fes';
-        else if (newTypes.includes('한정')) cls += ' is-limited';
-      }
+    el.className = 'bar-line' +
+      (isPast ? ' is-past' : '') +
+      (handoffStart.has(g) ? ' no-start-dot' : '');
+    el.style.cssText = `grid-column:${col};grid-row:${r0}/${r1};`;
+    el.style.setProperty('--lc', lc);
+
+    const half   = `${DAY_H / 2}px`;
+    const capPx  = `${(DAY_H - 10) / 2}px`;
+    // handoffStart: bar begins at mid-row; noEndDot: bar ends at mid-row
+    const clipTop = handoffStart.has(g) ? half : capPx;
+    if (!g.hasRealEnd) {
+      const fadePx = g._fadePx ?? (7 * DAY_H);
+      el.style.background =
+        `linear-gradient(to bottom, transparent ${clipTop}, ${lc} ${clipTop}, ${lc} calc(100% - ${fadePx}px), transparent 100%)`;
+    } else {
+      const clipBot = noEndDot.has(g) ? half : capPx;
+      el.style.background =
+        `linear-gradient(to bottom, transparent ${clipTop}, ${lc} ${clipTop}, ${lc} calc(100% - ${clipBot}), transparent calc(100% - ${clipBot}))`;
     }
-    el.className = cls;
-    el.title = buildTooltip(row);
-    el.style.cssText = `grid-column:${COL_NUM[colKey]};grid-row:${r0}/${r1};`;
-    if (colKey === 'update') el.dataset.update = r0;
-    if (colKey === 'story')  el.dataset.story  = r0;
-    if (colKey === 'exp') {
-      el.style.width = '18px';
-      el.style.justifySelf = 'end';
-      el.style.zIndex = '30';
-    }
-    if (colKey === 'camp' && shiftedCamp.has(row)) {
-      el.style.width = '75%';
-      el.style.justifySelf = 'end';
-      el.style.zIndex = '25';
+    if (g.isDashed) {
+      el.style.maskImage =
+        'repeating-linear-gradient(to bottom, black 0px, black 3px, transparent 3px, transparent 6px)';
     }
 
-    if (kind === '총력전' || kind === '제약해제결전' || kind === '종합전술시험') {
-      const ac = ARMOR_COLORS[row['속성3']];
-      if (ac) {
-        el.style.background = ac.bg;
-        el.style.borderColor = ac.border;
-        el.style.borderLeftColor = ac.accent;
-      }
-    }
-
-    if (kind === '대결전') {
-      const a3 = row['속성3'] || '';
-      if (a3.length === 1) {
-        const ac = ARMOR_COLORS[a3];
-        if (ac) {
-          el.style.background = ac.bg;
-          el.style.borderColor = ac.border;
-          el.style.borderLeftColor = ac.accent;
-        }
-      } else if (a3.length > 1) {
-        el.style.background = '#fff7ed';
-        el.style.borderColor = '#fed7aa';
-        el.style.borderLeftColor = '#ea580c';
-      }
-    }
-
-    if (kind === '캠페인') {
-      const text = `${row['속성1']} ${row['속성2']}`;
-      const isMission = /임무|특별의뢰/.test(text);
-      const hasThree  = /3/.test(text);
-      if (isMission && hasThree) {
-        el.style.background = '#fed7aa';
-        el.style.borderColor = '#fb923c';
-        el.style.borderLeftColor = '#c2410c';
-      } else if (isMission) {
-        el.style.background = '#ffedd5';
-        el.style.borderColor = '#fdba74';
-        el.style.borderLeftColor = '#ea580c';
-      } else if (hasThree) {
-        el.style.background = '#bbf7d0';
-        el.style.borderColor = '#4ade80';
-        el.style.borderLeftColor = '#15803d';
-      }
-    }
-
-    el.appendChild(buildBoxContent(row));
-
-    if (dur >= 4 && colKey !== 'story' && colKey !== 'exp') {
-      const sd = startDate, ed = addD(endDate, -1);
-      const df = document.createElement('div');
-      df.className = 'box-dur';
-      const dateStr = `${sd.getMonth()+1}/${sd.getDate()} – ${ed.getMonth()+1}/${ed.getDate()}`;
-      if (colKey === 'uc') {
-        df.textContent = `${dateStr} (${dur}일)`;
-      } else {
-        df.innerHTML = `${dateStr}<br>(${dur}일)`;
-      }
-      el.appendChild(df);
-    }
-
+    el.title = g.rows.map(r => buildTooltip(r)).join('\n---\n');
     sched.appendChild(el);
   });
 
-  // Resize update cards to fit their content
-  requestAnimationFrame(() => {
-    sched.querySelectorAll('[data-update]').forEach(el => {
-      const r0 = parseInt(el.dataset.update);
-      const needed = Math.ceil(el.scrollHeight / DAY_H);
-      if (needed > 0) el.style.gridRow = `${r0}/${r0 + needed}`;
-    });
-
-    // Resize story cards to fit rendered text height
-    sched.querySelectorAll('[data-story]').forEach(el => {
-      const r0 = parseInt(el.dataset.story);
-      const titleEl = el.querySelector('.box-title');
-      if (!titleEl) return;
-      let maxH = 0;
-      titleEl.childNodes.forEach(node => {
-        if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return;
-        const range = document.createRange();
-        range.selectNode(node);
-        const rect = range.getBoundingClientRect();
-        if (rect.height > maxH) maxH = rect.height;
-      });
-      if (maxH === 0) maxH = titleEl.textContent.length * 17;
-      const padPx = parseFloat(getComputedStyle(el).paddingTop) + parseFloat(getComputedStyle(el).paddingBottom);
-      const textRows  = Math.max(3, Math.ceil((maxH + padPx) / DAY_H));
-      const fadeRows  = 2;
-      const totalRows = textRows + fadeRows;
-      const gradPct   = Math.round(textRows / totalRows * 100);
-      el.style.gridRow = `${r0}/${r0 + totalRows}`;
-      el.style.webkitMaskImage = `linear-gradient(to bottom, black ${gradPct}%, transparent)`;
-      el.style.maskImage        = `linear-gradient(to bottom, black ${gradPct}%, transparent)`;
-    });
+  // Junction dots: standalone elements at handoff points, unaffected by bar mask
+  noEndDot.forEach(g => {
+    const jRow = toRow(g.end); // shared row: last row of A = first row of B
+    const lc   = laneColor(g.lane);
+    const dot  = document.createElement('div');
+    dot.className = 'junction-dot' + (endR(g) <= todayDate ? ' is-past' : '');
+    dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${jRow};`;
+    dot.style.setProperty('--lc', lc);
+    sched.appendChild(dot);
   });
 
-  // Scroll to top of earliest active card
+  // End dots: separate elements for bars that terminate (not in handoff chain)
+  groups.forEach(g => {
+    if (!g.hasRealEnd || noEndDot.has(g)) return;
+    const eRow = toRow(g.end);
+    const lc   = laneColor(g.lane);
+    const dot  = document.createElement('div');
+    dot.className = 'end-dot' + (endR(g) <= todayDate ? ' is-past' : '');
+    dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${eRow};`;
+    dot.style.setProperty('--lc', lc);
+    sched.appendChild(dot);
+  });
+
+  // Greedy packing for content boxes: lane 0 (no real end) first, then longer duration
+  const contentOrder = [...groups].sort((a, b) =>
+    a.start - b.start ||
+    (a.lane === 0 ? 0 : 1) - (b.lane === 0 ? 0 : 1) ||
+    b.end - a.end
+  );
+  const occupied = [];
+
+  function findSlot(preferred, height) {
+    let row = preferred;
+    for (const [os, oe] of occupied) {
+      if (row >= oe) continue;
+      if (row + height <= os) break;
+      row = oe;
+    }
+    return row;
+  }
+
+  const placements = new Map();
+  contentOrder.forEach(g => {
+    const height = g.rows.length === 1 ? 1 : Math.ceil(g.rows.length / 3) + 1;
+    const start  = findSlot(toRow(g.start), height);
+    const end    = start + height;
+    occupied.push([start, end]);
+    occupied.sort((a, b) => a[0] - b[0]);
+    placements.set(g, { start, end });
+  });
+
+  // Render connectors + content boxes
+  groups.forEach(g => {
+    const { start: r0, end: r1 } = placements.get(g);
+    const lc      = laneColor(g.lane);
+    const bg      = laneColorBg(lc);
+    const isPast  = endR(g) <= todayDate;
+    const laneCol = g.lane + 2;
+
+    // Horizontal connector from lane bar to content column boundary
+    const conn = document.createElement('div');
+    conn.className = 'lane-connector' + (isPast ? ' is-past' : '');
+    const connBg = g.isDashed
+      ? `repeating-linear-gradient(to right, ${lc} 0px, ${lc} 3px, transparent 3px, transparent 6px)`
+      : lc;
+    conn.style.cssText =
+      `grid-column:${laneCol}/${contentCol};grid-row:${r0};margin-left:8px;background:${connBg};`;
+    sched.appendChild(conn);
+
+    // Content box
+    const box = document.createElement('div');
+    box.className = 'content-box' + (isPast ? ' is-past' : '');
+    box.style.cssText =
+      `grid-column:${contentCol};grid-row:${r0}/${r1};` +
+      `background-color:var(--page-bg);background-image:linear-gradient(${bg},${bg});` +
+      (g.isDashed
+        ? `border-image:repeating-linear-gradient(to bottom,${lc} 0px,${lc} 3px,transparent 3px,transparent 6px) 1;`
+        : `border-left-color:${lc};border-left-style:solid;`);
+
+    // Group rows by 종류 (preserving first-occurrence order), merge same-kind into one line
+    const kindRows = new Map();
+    g.rows.forEach(row => {
+      const k = row['종류'];
+      if (!kindRows.has(k)) kindRows.set(k, []);
+      kindRows.get(k).push(row);
+    });
+    kindRows.forEach((rows, k) => {
+      const noMerge = k === '메인스토리';
+      if (noMerge || rows.length === 1) {
+        rows.forEach(row => {
+          const item = document.createElement('div');
+          item.className = 'content-item';
+          item.textContent = makeItemText(row);
+          item.title = buildTooltip(row);
+          box.appendChild(item);
+        });
+      } else {
+        const item = document.createElement('div');
+        item.className = 'content-item';
+        const firstText = makeItemText(rows[0]);
+        const prefix = firstText.match(/^\[.*?\]/)?.[0] ?? '';
+        item.textContent = prefix + ' ' + rows.map(r => makeItemText(r).replace(/^\[.*?\]\s*/, '')).join(' / ');
+        item.title = rows.map(r => buildTooltip(r)).join('\n---\n');
+        box.appendChild(item);
+      }
+    });
+
+    sched.appendChild(box);
+  });
+
+  // Scroll to today / earliest active group
   requestAnimationFrame(() => {
     const cal = document.getElementById('cal');
-    const activeStarts = entries
-      .filter(r => {
-        const s = pd(r['한섭시작일자']);
-        let e   = pd(r['한섭종료일자']);
-        if (!e) e = addD(s, 3);
-        return s && e && s <= todayDate && todayDate < e;
-      })
-      .map(r => pd(r['한섭시작일자']));
-    const targetDate = activeStarts.length > 0
+    const activeStarts = groups
+      .filter(g => g.start <= todayDate && todayDate < g.end)
+      .map(g => g.start);
+    const targetDate = activeStarts.length
       ? new Date(Math.min(...activeStarts))
       : todayDate;
-    cal.scrollTop = Math.max(0, (toRow(targetDate) - (HDR + 1)) * DAY_H);
+    cal.scrollTop = Math.max(0, diffD(targetDate, gridStart) * DAY_H - 80);
   });
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────────
 
 let _cachedRows = null;
 
@@ -826,9 +788,7 @@ async function init() {
     sched.style.display = '';
     render(rows);
 
-    // 10분마다 재렌더링 (오늘 마커 위치 갱신)
     setInterval(rerender, 10 * 60 * 1000);
-    // 탭이 다시 활성화될 때도 재렌더링
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) rerender();
     });
@@ -838,10 +798,19 @@ async function init() {
 }
 
 document.getElementById('btnToday').addEventListener('click', () => {
-  const cal = document.getElementById('cal');
-  const el  = document.getElementById('_today');
+  const cal  = document.getElementById('cal');
+  const el   = document.getElementById('_today');
   if (!el) return;
-  cal.scrollTop = Math.max(0, (parseInt(el.style.gridRow) - (HDR + 1)) * DAY_H);
+  const dayH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--day-h')) || 26;
+  const row  = parseInt(el.style.gridRow) - 1;
+  cal.scrollTop = Math.max(0, row * dayH - 80);
+});
+
+// Re-render when crossing the mobile/PC breakpoint (768px)
+let _prevMobile = window.innerWidth < 768;
+window.addEventListener('resize', () => {
+  const mobile = window.innerWidth < 768;
+  if (mobile !== _prevMobile) { _prevMobile = mobile; rerender(); }
 });
 
 init();
