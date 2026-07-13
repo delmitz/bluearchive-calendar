@@ -398,10 +398,9 @@ function groupByRange(rows) {
     }
     const isoS = startDate.toISOString().slice(0,10);
     const isoE = endDate.toISOString().slice(0,10);
-    const key = `${isoS}|${isoE}`;
-    if (!map.has(key)) map.set(key, { start: startDate, end: endDate, rows: [], hasRealEnd: false });
+    const key = `${isoS}|${isoE}|${hasRealEnd ? '1' : '0'}`;
+    if (!map.has(key)) map.set(key, { start: startDate, end: endDate, rows: [], hasRealEnd });
     const grp = map.get(key);
-    if (hasRealEnd) grp.hasRealEnd = true;
     grp.rows.push(row);
   });
   return [...map.values()].sort((a, b) => a.start - b.start || b.end - a.end);
