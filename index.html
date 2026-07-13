@@ -398,9 +398,13 @@ function groupByRange(rows) {
     }
     const isoS = startDate.toISOString().slice(0,10);
     const isoE = endDate.toISOString().slice(0,10);
-    const key = `${isoS}|${isoE}|${hasRealEnd ? '1' : '0'}`;
+    // No-end items: group by start date only (synthetic end varies by kind, irrelevant)
+    // Real-end items: group by start|end to avoid merging with no-end items of same range
+    const key = hasRealEnd ? `${isoS}|${isoE}|1` : `${isoS}|0`;
     if (!map.has(key)) map.set(key, { start: startDate, end: endDate, rows: [], hasRealEnd });
     const grp = map.get(key);
+    // Keep the longest synthetic window across no-end rows in the same group
+    if (!hasRealEnd && endDate > grp.end) grp.end = endDate;
     grp.rows.push(row);
   });
   return [...map.values()].sort((a, b) => a.start - b.start || b.end - a.end);
