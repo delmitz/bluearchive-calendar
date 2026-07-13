@@ -142,7 +142,7 @@
     /* ── Lane connector ── */
     .lane-connector {
       align-self: center;
-      height: 2px;
+      height: 3px;
       pointer-events: none;
       z-index: 5;
     }
@@ -206,6 +206,7 @@
     }
     .bar-line::after  { display: none; }
     .bar-line.no-start-dot::before { display: none; }
+    .bar-line.is-dashed::before { display: none; }
     .junction-dot, .end-dot {
       justify-self: start;
       margin-left: 6px;
@@ -226,6 +227,11 @@
       box-shadow: 0 0 0 2px var(--page-bg);
     }
     .junction-dot.is-past, .end-dot.is-past { opacity: 0.28; }
+    .junction-dot.dashed-start::before {
+      top: calc(var(--day-h) / 2 - 2px);
+      width: 4px; height: 4px;
+      box-shadow: 0 0 0 2px var(--page-bg), 0 0 0 4px var(--lc, #888), 0 0 0 6px var(--page-bg);
+    }
   </style>
 </head>
 <body>
@@ -500,7 +506,7 @@ function render(rows) {
   const lane0s = groups.filter(g => !g.hasRealEnd).sort((a, b) => a.start - b.start);
   lane0s.forEach((g, i) => {
     const next = lane0s.find((h, j) => j > i && h.start > g.start);
-    const fadeDays = next ? Math.min(7, diffD(next.start, g.start)) : 7;
+    const fadeDays = next ? Math.min(14, diffD(next.start, g.start)) : 14;
     g._fadePx = fadeDays * DAY_H;
     g.end = addD(g.end, fadeDays); // extend beyond original synthetic end
   });
@@ -529,7 +535,7 @@ function render(rows) {
   const todayRow = toRow(todayDate);
 
   // Handoff detection: consecutive same-lane, same-type groups with touching dates → seamless bar
-  const typeOf = g => g.rows[0]?.['종류'] ?? '';
+
   const byLane = {};
   groups.forEach(g => (byLane[g.lane] ??= []).push(g));
   const noEndDot    = new Set();
@@ -538,8 +544,7 @@ function render(rows) {
     laneGrps.sort((a, b) => a.start - b.start);
     for (let i = 0; i < laneGrps.length - 1; i++) {
       if (laneGrps[i].hasRealEnd &&
-          laneGrps[i].end.getTime() === laneGrps[i+1].start.getTime() &&
-          typeOf(laneGrps[i]) === typeOf(laneGrps[i+1])) {
+          laneGrps[i].end.getTime() === laneGrps[i+1].start.getTime()) {
         noEndDot.add(laneGrps[i]);
         handoffStart.add(laneGrps[i+1]);
       }
@@ -617,6 +622,7 @@ function render(rows) {
     const el = document.createElement('div');
     el.className = 'bar-line' +
       (isPast ? ' is-past' : '') +
+      (g.isDashed ? ' is-dashed' : '') +
       (handoffStart.has(g) ? ' no-start-dot' : '');
     el.style.cssText = `grid-column:${col};grid-row:${r0}/${r1};`;
     el.style.setProperty('--lc', lc);
@@ -626,7 +632,7 @@ function render(rows) {
     // handoffStart: bar begins at mid-row; noEndDot: bar ends at mid-row
     const clipTop = handoffStart.has(g) ? half : capPx;
     if (!g.hasRealEnd) {
-      const fadePx = g._fadePx ?? (7 * DAY_H);
+      const fadePx = g._fadePx ?? (14 * DAY_H);
       el.style.background =
         `linear-gradient(to bottom, transparent ${clipTop}, ${lc} ${clipTop}, ${lc} calc(100% - ${fadePx}px), transparent 100%)`;
     } else {
@@ -636,7 +642,7 @@ function render(rows) {
     }
     if (g.isDashed) {
       el.style.maskImage =
-        'repeating-linear-gradient(to bottom, black 0px, black 3px, transparent 3px, transparent 6px)';
+        'linear-gradient(to right, black 1px, transparent 1px, transparent 2px, black 2px)';
     }
 
     el.title = g.rows.map(r => buildTooltip(r)).join('\n---\n');
@@ -644,11 +650,14 @@ function render(rows) {
   });
 
   // Junction dots: standalone elements at handoff points, unaffected by bar mask
+  // dashed-start: solid→dashed transition → double-ring style
   noEndDot.forEach(g => {
     const jRow = toRow(g.end); // shared row: last row of A = first row of B
     const lc   = laneColor(g.lane);
     const dot  = document.createElement('div');
-    dot.className = 'junction-dot' + (endR(g) <= todayDate ? ' is-past' : '');
+    dot.className = 'junction-dot' +
+      (!g.isDashed ? ' dashed-start' : '') +
+      (endR(g) <= todayDate ? ' is-past' : '');
     dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${jRow};`;
     dot.style.setProperty('--lc', lc);
     sched.appendChild(dot);
@@ -706,7 +715,7 @@ function render(rows) {
     const conn = document.createElement('div');
     conn.className = 'lane-connector' + (isPast ? ' is-past' : '');
     const connBg = g.isDashed
-      ? `repeating-linear-gradient(to right, ${lc} 0px, ${lc} 3px, transparent 3px, transparent 6px)`
+      ? `linear-gradient(to bottom, ${lc} 1px, transparent 1px, transparent 2px, ${lc} 2px)`
       : lc;
     conn.style.cssText =
       `grid-column:${laneCol}/${contentCol};grid-row:${r0};margin-left:8px;background:${connBg};`;
@@ -719,7 +728,7 @@ function render(rows) {
       `grid-column:${contentCol};grid-row:${r0}/${r1};` +
       `background-color:var(--page-bg);background-image:linear-gradient(${bg},${bg});` +
       (g.isDashed
-        ? `border-image:repeating-linear-gradient(to bottom,${lc} 0px,${lc} 3px,transparent 3px,transparent 6px) 1;`
+        ? `border-left-color:${lc};border-left-style:double;`
         : `border-left-color:${lc};border-left-style:solid;`);
 
     // Group rows by 종류 (preserving first-occurrence order), merge same-kind into one line
