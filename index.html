@@ -141,12 +141,29 @@
 
     /* ── Lane connector ── */
     .lane-connector {
+      position: relative;
       align-self: center;
       height: 3px;
+      overflow: visible;
       pointer-events: none;
       z-index: 5;
     }
     .lane-connector.is-past { opacity: 0.32; }
+    .lane-connector.has-curve::before {
+      content: '';
+      position: absolute;
+      left: calc(-1 * var(--day-h) / 2 - 2px);
+      bottom: 0;
+      width: calc(var(--day-h) / 2 + 2px);
+      height: calc(var(--day-h) / 2 + 1.5px);
+      border-left: 3px solid var(--lc);
+      border-bottom: 3px solid var(--lc);
+      border-bottom-left-radius: calc(var(--day-h) / 2);
+    }
+    .lane-connector.has-curve.is-dashed::before {
+      border-left-style: double;
+      border-bottom-style: double;
+    }
 
     /* ── Content boxes ── */
     .content-box {
@@ -712,13 +729,20 @@ function render(rows) {
     const laneCol = g.lane + 2;
 
     // Horizontal connector from lane bar to content column boundary
+    const barStartRow = toRow(g.start);
+    const hasCurve = r0 > barStartRow;
     const conn = document.createElement('div');
-    conn.className = 'lane-connector' + (isPast ? ' is-past' : '');
+    conn.className = 'lane-connector' +
+      (isPast ? ' is-past' : '') +
+      (g.isDashed ? ' is-dashed' : '') +
+      (hasCurve ? ' has-curve' : '');
     const connBg = g.isDashed
       ? `linear-gradient(to bottom, ${lc} 1px, transparent 1px, transparent 2px, ${lc} 2px)`
       : lc;
+    const ml = hasCurve ? 'calc(var(--day-h) / 2 + 8px)' : '8px';
     conn.style.cssText =
-      `grid-column:${laneCol}/${contentCol};grid-row:${r0};margin-left:8px;background:${connBg};`;
+      `grid-column:${laneCol}/${contentCol};grid-row:${r0};margin-left:${ml};background:${connBg};`;
+    conn.style.setProperty('--lc', lc);
     sched.appendChild(conn);
 
     // Content box
