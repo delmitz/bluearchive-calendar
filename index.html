@@ -538,12 +538,18 @@ function render(rows) {
   const lane0s = groups.filter(g => !g.hasRealEnd).sort((a, b) => a.start - b.start);
   lane0s.forEach((g, i) => {
     const next = lane0s.find((h, j) => j > i && h.start > g.start);
-    // Fade starts at g.end (synthetic window end), extends toward next group's start.
-    // Minimum 7 days so the fade is always visible even when the next group starts immediately.
     const gapToNext = next ? Math.max(0, diffD(next.start, g.end)) : 14;
-    const fadeDays = Math.min(14, Math.max(7, gapToNext));
-    g._fadePx = fadeDays * DAY_H;
-    g.end = addD(g.end, fadeDays); // extend beyond original synthetic end
+    if (gapToNext > 0) {
+      // Gap exists: extend bar toward next group and fade through the gap (max 14 days)
+      const fadeDays = Math.min(14, gapToNext);
+      g._fadePx = fadeDays * DAY_H;
+      g.end = addD(g.end, fadeDays);
+    } else {
+      // Next group starts at/before synthetic end: fade within the existing window (last 40%)
+      const barDays = diffD(g.end, g.start);
+      g._fadePx = Math.max(2, Math.round(barDays * 0.4)) * DAY_H;
+      // g.end stays at synthetic end — bar does not extend past next group's start
+    }
   });
 
   // CSV end dates are inclusive; endR converts to exclusive for grid/past comparisons
