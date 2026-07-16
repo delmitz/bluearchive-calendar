@@ -261,6 +261,32 @@
     .sched.hl-active .junction-dot.hl-selected,
     .sched.hl-active .end-dot.hl-selected { opacity: 1; }
     .content-box { cursor: pointer; }
+    .bar-label {
+      justify-self: start;
+      align-self: stretch;
+      margin-left: 3px;
+      width: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      pointer-events: none;
+      position: relative;
+      z-index: 22;
+    }
+    .bar-label > span {
+      display: block;
+      white-space: nowrap;
+      font-size: 0.6rem;
+      font-weight: 600;
+      color: var(--lc);
+      transform: rotate(90deg);
+      transform-origin: center center;
+      background: rgba(255,255,255,0.72);
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+    .bar-label.is-past { opacity: 0.32; }
   </style>
 </head>
 <body>
@@ -726,8 +752,11 @@ function render(rows) {
     sched.appendChild(dot);
   });
 
+  const isExpCampaign = g => g.rows.every(r => r['종류'] === '캠페인' && (r['속성1'] || '').trim() === '경험치');
+
   // Greedy packing for content boxes: lane 0 (no real end) first, then longer duration
-  const contentOrder = [...groups].sort((a, b) =>
+  // Skip 경험치 groups — they show inline on the bar instead of a content-box
+  const contentOrder = [...groups].filter(g => !isExpCampaign(g)).sort((a, b) =>
     a.start - b.start ||
     (a.lane === 0 ? 0 : 1) - (b.lane === 0 ? 0 : 1) ||
     b.end - a.end
@@ -756,11 +785,26 @@ function render(rows) {
 
   // Render connectors + content boxes
   groups.forEach(g => {
-    const { start: r0, end: r1 } = placements.get(g);
     const lc      = laneColor(g.lane);
-    const bg      = laneColorBg(lc);
     const isPast  = endR(g) <= todayDate;
     const laneCol = g.lane + 2;
+
+    // 경험치 campaign: show rotated text label on the bar, skip connector + content-box
+    if (isExpCampaign(g)) {
+      const lbl = document.createElement('div');
+      lbl.className = 'bar-label' + (isPast ? ' is-past' : '');
+      lbl.dataset.chain = gChain.get(g);
+      lbl.style.cssText = `grid-column:${laneCol};grid-row:${toRow(g.start)}/${toRow(endR(g))};`;
+      lbl.style.setProperty('--lc', lc);
+      const sp = document.createElement('span');
+      sp.textContent = '경험치';
+      lbl.appendChild(sp);
+      sched.appendChild(lbl);
+      return;
+    }
+
+    const { start: r0, end: r1 } = placements.get(g);
+    const bg      = laneColorBg(lc);
 
     // Horizontal connector from lane bar to content column boundary
     const barStartRow = toRow(g.start);
