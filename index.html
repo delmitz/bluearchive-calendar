@@ -14,6 +14,7 @@
       --date-bg:   #f4f7fb;
       --outer-bg:  #dde3ec;
       --day-h:     26px;
+      --week-band: rgba(0,0,0,0.035);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -24,6 +25,7 @@
         --page-bg:   #0f172a;
         --date-bg:   #162035;
         --outer-bg:  #080e1a;
+        --week-band: rgba(255,255,255,0.04);
       }
     }
     :root[data-theme="dark"] {
@@ -34,6 +36,10 @@
       --page-bg:   #0f172a;
       --date-bg:   #162035;
       --outer-bg:  #080e1a;
+      --week-band: rgba(255,255,255,0.04);
+    }
+    :root[data-theme="light"] {
+      --week-band: rgba(0,0,0,0.035);
     }
     :root[data-theme="light"] {
       --border:    #c8d3e0;
@@ -641,6 +647,25 @@ function render(rows) {
       }
     });
   });
+
+  // Week bands: alternate background every Tuesday (odd bands get --week-band tint)
+  {
+    let tue = new Date(gridStart);
+    while (tue.getDay() !== 2) tue = addD(tue, 1);
+    let band = 0;
+    while (tue < gridEnd) {
+      const nextTue = addD(tue, 7);
+      const r0 = Math.max(1, toRow(tue));
+      const r1 = Math.min(ROWS, toRow(nextTue));
+      if (r0 < r1 && band % 2 === 1) {
+        const wb = document.createElement('div');
+        wb.style.cssText = `grid-column:1/-1;grid-row:${r0}/${r1};background:var(--week-band);pointer-events:none;`;
+        sched.appendChild(wb);
+      }
+      tue = nextTue;
+      band++;
+    }
+  }
 
   // Lane area placeholder (for z-ordering)
   const laneEnd = document.createElement('div');
