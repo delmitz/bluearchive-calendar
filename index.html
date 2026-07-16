@@ -799,10 +799,61 @@ function render(rows) {
   }
 
   const placements = new Map();
-  contentOrder.forEach(g => {
+  const nonJfdOrder = contentOrder.filter(g => !g.rows.some(r => r['종류'] === '제약해제결전'));
+  const jfdOrder    = contentOrder.filter(g =>  g.rows.some(r => r['종류'] === '제약해제결전'));
+
+  nonJfdOrder.forEach(g => {
     const height = g.rows.length === 1 ? 1 : Math.ceil(g.rows.length / 3) + 1;
     const start  = findSlot(toRow(g.start), height);
     const end    = start + height;
+    occupied.push([start, end]);
+    occupied.sort((a, b) => a[0] - b[0]);
+    placements.set(g, { start, end });
+  });
+
+  jfdOrder.forEach(g => {
+    const height = g.rows.length === 1 ? 1 : Math.ceil(g.rows.length / 3) + 1;
+
+    const isActive = g.start <= todayDate && endR(g) > todayDate;
+
+    let preferred = toRow(g.start);
+
+    if (isActive) {
+      // Currently ongoing JFD: anchor after carry-over events or at midpoint
+      const overlapGroups = nonJfdOrder
+        .filter(ng => ng.start >= g.start && ng.start < endR(g))
+        .sort((a, b) => a.start - b.start);
+
+      preferred = toRow(g.start) + 2;
+
+      const applyMidpoint = () => {
+        const midDate  = addD(g.start, Math.floor(diffD(endR(g), g.start) / 2));
+        const afterMid = overlapGroups.filter(ng => ng.start >= midDate);
+        if (afterMid.length > 0) {
+          preferred = Math.max(preferred, toRow(afterMid[0].start));
+        } else {
+          preferred = Math.max(preferred, toRow(endR(g)) - 4);
+        }
+      };
+
+      const prevActive = nonJfdOrder.filter(ng => ng.start < g.start && endR(ng) > g.start);
+      if (prevActive.length > 0) {
+        const maxPrevEnd = Math.max(...prevActive.map(ng => {
+          const p = placements.get(ng);
+          return p ? p.end : toRow(g.start);
+        }));
+        if (maxPrevEnd <= toRow(g.start) + 3) {
+          preferred = Math.max(preferred, maxPrevEnd);
+        } else {
+          applyMidpoint();
+        }
+      } else {
+        applyMidpoint();
+      }
+    }
+
+    const start = findSlot(preferred, height);
+    const end   = start + height;
     occupied.push([start, end]);
     occupied.sort((a, b) => a[0] - b[0]);
     placements.set(g, { start, end });

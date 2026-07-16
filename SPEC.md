@@ -199,8 +199,17 @@
 
 ## index.html 현재 상태
 
-- 수직 Gantt 캘린더, CSS Grid
-- 5컬럼: 날짜(36px) | 이벤트 | 픽업 | 총력전 | 캠페인
-- 오늘 마커(파란 선 + TODAY 칩), 자동 스크롤, "오늘로" 버튼
-- **현재 ENTRIES 하드코딩** (2026-05-14~08-20 샘플, 연도 오류 포함) — 교체 예정
-- `segs()` 함수로 암시적 종료일 계산 중 → 새 포맷 적용 시 제거 예정
+- **브랜치 그래프 타임라인** 레이아웃, CSS Grid
+- 컬럼 구조: `20px(날짜) | N×14px(레인) | 1fr(컨텐츠)`
+  - 날짜 컬럼: 세로쓰기, sticky 고정, 점 위치에만 날짜 표시
+  - 레인 컬럼(N개, 최소 4): 4색 브랜치 라인 + 원형 점 (GitHub 스타일)
+  - 컨텐츠 컬럼: 그리디 패킹으로 겹치지 않게 박스 배치
+- 데이터 처리 흐름: CSV fetch → groupPickups → groupByRange → assignLanes → render
+  - `groupPickups`: 같은 날짜 픽업 행을 1개로 병합 (_chars 배열에 저장)
+  - `groupByRange`: 같은 (시작일, 종료일) 행을 1개 그룹으로 묶음
+  - `assignLanes`: 그리디 인터벌 스케줄링으로 레인 배정
+- 컨텐츠 박스: 레인 색상 기반 배경 틴트 + 좌측 보더, `makeItemText()`로 한줄 텍스트
+- 오늘 마커: 얇은 빨간선(1px), z-index 없음(박스 뒤로)
+- "오늘로" 버튼, 자동 스크롤(가장 이른 활성 그룹), 10분 자동 갱신
+- 다크모드: `prefers-color-scheme` + `data-theme` 토큰 지원
+- CSV URL: `https://docs.google.com/spreadsheets/d/e/2PACX-1vRE_.../pub?output=csv`
