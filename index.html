@@ -716,7 +716,7 @@ function render(rows) {
 
     const col    = g.lane + 2;
     const lc     = laneColor(g.lane);
-    const isPast = endR(g) <= todayDate;
+    const isPast = addD(endR(g), -1) <= todayDate;
 
     const el = document.createElement('div');
     el.className = 'bar-line' +
@@ -757,7 +757,7 @@ function render(rows) {
     const dot  = document.createElement('div');
     dot.className = 'junction-dot' +
       (!g.isDashed ? ' dashed-start' : '') +
-      (endR(g) <= todayDate ? ' is-past' : '');
+      (addD(endR(g), -1) <= todayDate ? ' is-past' : '');
     dot.dataset.chain = gChain.get(g);
     dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${jRow};`;
     dot.style.setProperty('--lc', lc);
@@ -770,7 +770,7 @@ function render(rows) {
     const eRow = toRow(g.end);
     const lc   = laneColor(g.lane);
     const dot  = document.createElement('div');
-    dot.className = 'end-dot' + (endR(g) <= todayDate ? ' is-past' : '');
+    dot.className = 'end-dot' + (addD(endR(g), -1) <= todayDate ? ' is-past' : '');
     dot.dataset.chain = gChain.get(g);
     dot.style.cssText = `grid-column:${g.lane + 2};grid-row:${eRow};`;
     dot.style.setProperty('--lc', lc);
@@ -862,7 +862,7 @@ function render(rows) {
   // Render connectors + content boxes
   groups.forEach(g => {
     const lc      = laneColor(g.lane);
-    const isPast  = endR(g) <= todayDate;
+    const isPast  = addD(endR(g), -1) <= todayDate;
     const laneCol = g.lane + 2;
 
     // 경험치 campaign: show rotated text label on the bar, skip connector + content-box
