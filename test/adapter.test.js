@@ -150,3 +150,38 @@ test('gap cards render without a tag or title row', () => {
   assert.doesNotMatch(html, /기타 일정/);
   assert.match(html, /card-gap/);
 });
+
+test('story-only days inside a card period are drawn behind that card', () => {
+  const view = Timeline.buildRows(convert(EXAMPLE), null);
+  assert.equal(view.rows.some((r) => r.isDay && r.start === '2026-08-19'), false);
+  const card = view.rows.find((r) => r.isDay && r.start === '2026-08-12').items[0];
+  assert.equal(card.midStories.length, 1);
+  assert.equal(card.midStories[0].label, '08.19 (수) ~');
+  assert.equal(card.midStories[0].week, 1);
+  assert.equal(card.midStories[0].items[0].name, '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」');
+  const html = Timeline.rowsHtml(view.rows);
+  assert.match(html, /<li class="span-story" data-week="1">/);
+  // The raid ending with this card comes after the story text.
+  assert.ok(html.indexOf('story-tail') < html.indexOf('raid-detached'));
+});
+
+test('a day lists story blocks, then raid start lines, then cards', () => {
+  const csv = scheduleCsv([
+    '2026-09-23,2026-10-07,14,,,,이벤트,테스트 이벤트,신규,,,',
+    '2026-09-24,2026-10-28,34,,,,제약해제결전,티페레트,실내전,중장갑,,',
+    '2026-09-23,,,,,,애용품,카린,에리,시미코,,'
+  ]);
+  const html = Timeline.rowsHtml(Timeline.buildRows(convert(csv), null).rows);
+  const story = html.indexOf('class="story"');
+  const raid = html.indexOf('raid-start');
+  const card = html.indexOf('card-new');
+  assert.ok(story < raid && raid < card);
+});
+
+test('raid start lines show the length in weeks', () => {
+  // Sheet: 27 days (2026-07-30 to 2026-08-26) -> 4 weeks.
+  const html = Timeline.rowsHtml(Timeline.buildRows(convert(EXAMPLE), null).rows);
+  assert.match(html, /<span class="raid-phase">시작 \(4주간\)<\/span>/);
+  const csv = scheduleCsv(['2026-09-24,2026-10-28,34,,,,제약해제결전,티페레트,실내전,중장갑,,']);
+  assert.match(Timeline.rowsHtml(Timeline.buildRows(convert(csv), null).rows), /시작 \(5주간\)/);
+});

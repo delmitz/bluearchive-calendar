@@ -105,7 +105,9 @@
           name: e.name,
           nameCls: isPlaceholder(e.name) ? 'ph' : '',
           armorGroups: armorGroups(e.armor),
-          endT: parseDay(e.end)
+          endT: parseDay(e.end),
+          // Raids run n weeks minus a day; shown simply as "n주간".
+          weeks: Math.round((Math.round((parseDay(e.end) - x.t) / DAY_MS) + 1) / 7)
         };
         day.raids.push(raid);
         raids.push(raid);
@@ -144,7 +146,9 @@
         week.isEmpty = !week.hasPickups && !week.subs.length && !week.battles.length;
         return week;
       });
+      item.t = x.t;
       item.endT = parseDay(e.end);
+      item.midStories = [];
       day.items.push(item);
       cards.push(item);
     });
@@ -153,6 +157,24 @@
     days.forEach(function (dy) {
       dy.items = dy.items.filter(function (it) { return it.isStory; })
         .concat(dy.items.filter(function (it) { return !it.isStory; }));
+    });
+
+    // A day holding only open-ended story blocks that starts inside a card's
+    // period (after its first day) is drawn behind that card instead: the
+    // frame starts at the week it begins in and its text follows the card.
+    days = days.filter(function (dy) {
+      if (dy.raids.length || dy.items.some(function (it) { return !it.isStory; })) return true;
+      var host = null;
+      cards.forEach(function (c) {
+        if (c.t < dy.t && dy.t <= c.endT && (!host || c.t >= host.t)) host = c;
+      });
+      if (!host) return true;
+      host.midStories.push({
+        label: dy.label + ' ~',
+        week: Math.floor((dy.t - host.t) / (7 * DAY_MS)),
+        items: dy.items
+      });
+      return false;
     });
 
     // Attach each raid's end line under the card that ends the same day;
@@ -201,12 +223,12 @@
     }).join('') + '</span>';
   }
 
-  function raidHtml(r, tag, phase) {
-    return '<' + tag + ' class="m-card raid raid-' + phase + '">' +
+  function raidHtml(r, tag, phase, extraCls) {
+    return '<' + tag + ' class="m-card raid raid-' + phase + (extraCls ? ' ' + extraCls : '') + '">' +
       '<span class="tag tag-raid">제약해제결전</span>' +
       '<span class="raid-name ' + r.nameCls + '">' + esc(r.name) + '</span>' +
       armorsHtml(r.armorGroups) +
-      '<span class="raid-phase">' + (phase === 'start' ? '시작' : '종료') + '</span>' +
+      '<span class="raid-phase">' + (phase === 'start' ? '시작 (' + r.weeks + '주간)' : '종료') + '</span>' +
       '</' + tag + '>';
   }
 
@@ -235,12 +257,14 @@
   }
 
   function cardHtml(item) {
-    var weeks = item.weeks.filter(function (w) { return !w.isEmpty; }).map(function (w) {
-      return '<div class="week m-week" style="background: var(' + w.tint + ')">' +
+    var weeks = item.weeks.map(function (w, i) {
+      if (w.isEmpty) return '';
+      return '<div class="week m-week" data-week="' + i + '" style="background: var(' + w.tint + ')">' +
         '<p class="week-label">' + esc(w.label) + '</p>' +
         pickupsHtml(w) + battlesHtml(w.battles) + subsHtml(w.subs) + '</div>';
     }).join('');
-    return '<li class="card card-' + esc(item.type) + ' m-card">' +
+    var tag = item.midStories.length ? 'div' : 'li';
+    var card = '<' + tag + ' class="card card-' + esc(item.type) + ' m-card">' +
       '<div class="card-head m-head">' +
       '<p class="card-date">' + esc(item.dateText) + '</p>' +
       // Gap cards (pickups/battles outside any event) have no tag or title row.
@@ -248,16 +272,68 @@
         '<div class="row-wrap"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
         (item.name ? '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span>' : '') + '</div>') +
       pickupsHtml(item) + battlesHtml(item.battles) + subsHtml(item.fullSubs) +
-      '</div>' + weeks + '</li>' +
-      item.raidEnds.map(function (r) { return raidHtml(r, 'li', 'end'); }).join('');
+      '</div>' + weeks + '</' + tag + '>';
+    if (!item.midStories.length) {
+      return card + item.raidEnds.map(function (r) { return raidHtml(r, 'li', 'end'); }).join('');
+    }
+    // Story blocks starting mid-card: their frame runs behind the card (placed
+    // by layout()), their text follows it, and raid end lines come last.
+    return '<li class="span-story" data-week="' + item.midStories[0].week + '">' +
+      '<span class="span-frame" aria-hidden="true"></span>' + card +
+      '<div class="story-tail">' + item.midStories.map(function (ms) {
+        return '<p class="story-tail-date">' + esc(ms.label) + '</p>' +
+          ms.items.map(storyBody).join('');
+      }).join('') + '</div>' +
+      item.raidEnds.map(function (r) { return raidHtml(r, 'p', 'end', 'raid-detached'); }).join('') +
+      '</li>';
+  }
+
+  // A story block without a name holds only the day's open-ended text lines.
+  function storyBody(item) {
+    return (item.name ? '<div class="row-wrap">' +
+      '<span class="tag tag-story">' + esc(item.typeLabel) + '</span>' +
+      '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span></div>' : '') +
+      subsHtml(item.fullSubs);
   }
 
   function storyHtml(item) {
-    // A story block without a name holds only the day's open-ended text lines.
-    return '<li class="story">' + (item.name ? '<div class="row-wrap">' +
-      '<span class="tag tag-story">' + esc(item.typeLabel) + '</span>' +
-      '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span></div>' : '') +
-      subsHtml(item.fullSubs) + '</li>';
+    return '<li class="story">' + storyBody(item) + '</li>';
+  }
+
+  // Positions that depend on rendered sizes: where each mid-card story frame
+  // starts and ends, how far detached raid end lines reach up to their card,
+  // and how far a story block's line runs down to the card below it.
+  var STORY_FADE = 28;
+  var SPAN_FADE = 16; // must match the fade length of .span-frame::after
+  function layout(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.story'), function (story) {
+      var next = story.nextElementSibling;
+      while (next && !next.classList.contains('card') && !next.classList.contains('span-story')) {
+        next = next.nextElementSibling;
+      }
+      if (!next) { story.style.removeProperty('--story-reach'); return; }
+      var card = next.classList.contains('card') ? next : next.querySelector('.card');
+      var gap = card.getBoundingClientRect().top - story.getBoundingClientRect().bottom;
+      // The line fades out starting where the card begins.
+      story.style.setProperty('--story-reach', (gap + STORY_FADE) + 'px');
+    });
+    var spans = root.querySelectorAll('.span-story');
+    Array.prototype.forEach.call(spans, function (span) {
+      var card = span.querySelector('.card');
+      var week = card.querySelector('[data-week="' + span.getAttribute('data-week') + '"]');
+      var spanTop = span.getBoundingClientRect().top;
+      var top = week ? week.getBoundingClientRect().top - spanTop : 0;
+      span.style.setProperty('--frame-top', top + 'px');
+      // The frame's line starts fading where its text ends and is gone
+      // within about one line.
+      var tail = span.querySelector('.story-tail');
+      span.style.setProperty('--frame-bottom',
+        (span.getBoundingClientRect().bottom - tail.getBoundingClientRect().bottom - SPAN_FADE) + 'px');
+      var cardBottom = card.getBoundingClientRect().bottom;
+      Array.prototype.forEach.call(span.querySelectorAll('.raid-detached'), function (r) {
+        r.style.setProperty('--reach', (r.getBoundingClientRect().top - cardBottom) + 'px');
+      });
+    });
   }
 
   function rowsHtml(rows) {
@@ -268,14 +344,16 @@
       }
       return '<li class="day"><h2 class="day-head"><span class="day-dot" aria-hidden="true"></span>' +
         '<time datetime="' + esc(row.start) + '">' + esc(row.label) + '</time></h2>' +
-        row.raids.map(function (r) { return raidHtml(r, 'p', 'start'); }).join('') +
-        '<ul class="day-items">' + row.items.map(function (item) {
-          return item.isStory ? storyHtml(item) : cardHtml(item);
-        }).join('') + '</ul></li>';
+        // Order within a day: story blocks, raid start lines, then cards.
+        '<ul class="day-items">' +
+        row.items.filter(function (it) { return it.isStory; }).map(storyHtml).join('') +
+        row.raids.map(function (r) { return raidHtml(r, 'li', 'start'); }).join('') +
+        row.items.filter(function (it) { return !it.isStory; }).map(cardHtml).join('') +
+        '</ul></li>';
     }).join('');
   }
 
-  var api = { buildRows: buildRows, rowsHtml: rowsHtml, parseDay: parseDay };
+  var api = { buildRows: buildRows, rowsHtml: rowsHtml, layout: layout, parseDay: parseDay };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Timeline = api;
 })(this);

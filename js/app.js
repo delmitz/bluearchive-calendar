@@ -51,6 +51,7 @@
   function render() {
     var view = Timeline.buildRows(events, fromT);
     timelineEl.innerHTML = Timeline.rowsHtml(view.rows);
+    Timeline.layout(timelineEl);
     loadMoreEl.hidden = !view.hasEarlier;
     setStatus(view.rows.length ? '' : '표시할 일정이 없습니다.');
   }
@@ -83,6 +84,11 @@
     fromT -= PAGE_WEEKS * WEEK_MS;
     render();
   });
+
+  window.addEventListener('resize', function () { Timeline.layout(timelineEl); });
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(function () { Timeline.layout(timelineEl); });
+  }
 
   load();
 })();
