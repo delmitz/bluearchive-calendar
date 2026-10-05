@@ -213,3 +213,19 @@ test('group story lines show the episode range', () => {
     { label: '그룹스토리', text: '「수행부」 3-4화' }
   ]);
 });
+
+test('dates in display formats are normalized', () => {
+  const csv = [HEADER, ',,2026. 6. 10. (수),2026. 6. 24. (수),14,2026. 9. 29. (화),2026. 10. 13. (화),14,이벤트,테스트,복각,,,'].join('\n');
+  assert.deepEqual(convert(csv), [{ type: 'rerun', start: '2026-09-29', end: '2026-10-12', name: '테스트' }]);
+});
+
+test('permanent events (이벤트 + 상설) become story text lines', () => {
+  const schema = SCHEMA_CSV.replace('이벤트,제목,신규/복각,배포캐릭터,,', '이벤트,제목,신규/복각/상설,배포캐릭터,,');
+  const csv = scheduleCsv([
+    '2026-07-22,2026-08-05,14,,,,이벤트,테스트 이벤트,신규,,,',
+    '2026-07-22,,,,,,이벤트,빛으로 나아가는 그녀들의 소야곡,상설,,,'
+  ]);
+  const events = convert(csv, schema);
+  assert.deepEqual(events.map((e) => e.type), ['new', 'story']);
+  assert.deepEqual(events[1].fullSubs, [{ label: '상설 이벤트', text: '빛으로 나아가는 그녀들의 소야곡' }]);
+});

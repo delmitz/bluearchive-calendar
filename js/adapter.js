@@ -91,6 +91,14 @@
     return schema;
   }
 
+  // Column of an attribute meaning. A schema name may extend the meaning
+  // (e.g. "신규/복각/상설" for "신규/복각"), so a prefix match is accepted.
+  function column(map, meaning) {
+    if (map[meaning]) return map[meaning];
+    var key = Object.keys(map).filter(function (k) { return k.indexOf(meaning) === 0; })[0];
+    return key ? map[key] : '';
+  }
+
   function parseDay(s) {
     var p = s.split('-');
     return Date.UTC(+p[0], +p[1] - 1, +p[2]);
@@ -102,6 +110,12 @@
   }
   function md(t) { var d = new Date(t); return pad(d.getUTCMonth() + 1) + '.' + pad(d.getUTCDate()); }
   function isDay(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
+  // Sheet dates may be published in any display format (e.g. "2026. 6. 10. (수)");
+  // normalize year/month/day to YYYY-MM-DD, or '' when there is no date.
+  function normDay(s) {
+    var m = String(s || '').match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    return m ? m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]) : '';
+  }
 
   function armorList(value) {
     return String(value || '').split(',').map(function (a) { return ARMOR_KEYS[a.trim()]; })
@@ -116,23 +130,23 @@
     var rows = [];
     records.forEach(function (rec, order) {
       var type = rec[COL.type];
-      var start = rec[COL.start];
+      var start = normDay(rec[COL.start]);
       if (!type || !isDay(start)) return;
       if (HIDDEN_TYPES[type]) return;
       var map = schema[type];
       if (!map) { warn('Type not defined in schema, row skipped: ' + type); return; }
       var need = REQUIRED[type];
       if (!need) { warn('Type has no display rule, row skipped: ' + type); return; }
-      var missing = need.filter(function (m) { return !map[m]; });
+      var missing = need.filter(function (m) { return !column(map, m); });
       if (missing.length) {
         warn('Schema for ' + type + ' lacks ' + missing.join(', ') + ', row skipped');
         return;
       }
-      var end = isDay(rec[COL.end]) ? rec[COL.end] : '';
+      var end = normDay(rec[COL.end]);
       rows.push({
         order: order, type: type, start: start, end: end,
         t: parseDay(start), endT: end ? parseDay(end) : null,
-        get: function (meaning) { return map[meaning] ? (rec[map[meaning]] || '') : ''; }
+        get: function (meaning) { var c = column(map, meaning); return c ? (rec[c] || '') : ''; }
       });
     });
 
@@ -152,6 +166,7 @@
     // Pass 1: events, main stories, unrestricted raids.
     rows.forEach(function (r) {
       if (r.type === '이벤트') {
+        if (r.get('신규/복각') === '상설') return;  // permanent: a text line (pass 3)
         if (!r.end) { warn('Event without an end date skipped: ' + r.get('제목')); return; }
         var kind = EVENT_KIND[r.get('신규/복각')] || 'new';
         newCard(kind, r.start, r.end, r.get('제목'));
@@ -256,6 +271,7 @@
         return r.get('제목') ? line('그룹스토리', '「' + r.get('제목') + '」' + (ep ? ' ' + ep + '화' : '')) : '';
       }
       case '이벤트(상설)': return line('상설 이벤트', r.get('이벤트명'));
+      case '이벤트': return r.get('신규/복각') === '상설' ? line('상설 이벤트', r.get('제목')) : '';
       case '애용품': {
         var names = [1, 2, 3, 4, 5].map(function (i) { return r.get('캐릭터' + i); }).filter(Boolean);
         return line('애용품', names.join(' · '));
