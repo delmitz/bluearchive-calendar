@@ -54,6 +54,9 @@ body{margin:0}
 .story{display:flex;flex-direction:column;gap:6px;padding:12px 4px 2px 14px;margin-bottom:18px}
 .title{font-size:17px;font-weight:700;line-height:1.4;position:relative;top:1px}
 .row-wrap{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+/* Tag + title: a long title starts right after the tag and wraps in place. */
+.title-row{display:flex;align-items:flex-start;gap:8px}
+.title-row .title{min-width:0}
 .card.m-card{display:flex;flex-direction:column;margin-left:16px;border-radius:14px;overflow:hidden;box-sizing:border-box}
 .card-head{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 18px 10px}
 .card-date{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}

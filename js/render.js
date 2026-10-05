@@ -269,7 +269,7 @@
       '<p class="card-date">' + esc(item.dateText) + '</p>' +
       // Gap cards (pickups/battles outside any event) have no tag or title row.
       (item.type === 'gap' ? '' :
-        '<div class="row-wrap"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
+        '<div class="title-row"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
         (item.name ? '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span>' : '') + '</div>') +
       pickupsHtml(item) + battlesHtml(item.battles) + subsHtml(item.fullSubs) +
       '</div>' + weeks + '</' + tag + '>';
@@ -290,7 +290,7 @@
 
   // A story block without a name holds only the day's open-ended text lines.
   function storyBody(item) {
-    return (item.name ? '<div class="row-wrap">' +
+    return (item.name ? '<div class="title-row">' +
       '<span class="tag tag-story">' + esc(item.typeLabel) + '</span>' +
       '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span></div>' : '') +
       subsHtml(item.fullSubs);
