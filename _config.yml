@@ -1,0 +1,5 @@
+# GitHub Pages (Jekyll) build settings.
+# Development-only folders stay in the repository but are not published.
+exclude:
+  - test/
+  - scripts/
