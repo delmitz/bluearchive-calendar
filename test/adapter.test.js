@@ -185,3 +185,19 @@ test('raid start lines show the length in weeks', () => {
   const csv = scheduleCsv(['2026-09-24,2026-10-28,34,,,,제약해제결전,티페레트,실내전,중장갑,,']);
   assert.match(Timeline.rowsHtml(Timeline.buildRows(convert(csv), null).rows), /시작 \(5주간\)/);
 });
+
+test('story blocks of the same day share one frame', () => {
+  const csv = scheduleCsv([
+    '2026-04-21,,,,,,메인스토리,2부 프롤로그,,,,',
+    '2026-04-21,,,,,,메인스토리,2부 Vol.0 「총학생회」편 1장 「살구꽃이 피는 어느 봄날에」,,,,',
+    '2026-04-21,,,,,,미니스토리,테스트 미니,,,,'
+  ]);
+  const day = Timeline.buildRows(convert(csv), null).rows.find((r) => r.isDay);
+  assert.equal(day.items.length, 1);
+  assert.deepEqual(day.items[0].titles.map((t) => t.name),
+    ['2부 프롤로그', '2부 Vol.0 「총학생회」편 1장 「살구꽃이 피는 어느 봄날에」']);
+  const html = Timeline.rowsHtml([day]);
+  assert.equal((html.match(/class="story"/g) || []).length, 1);
+  assert.equal((html.match(/tag-story/g) || []).length, 2);
+  assert.match(html, /미니스토리 「테스트 미니」/);
+});

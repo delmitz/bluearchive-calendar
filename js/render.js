@@ -126,6 +126,7 @@
 
       if (e.type === 'story' || !e.end) {
         item.isStory = true;
+        item.titles = item.name ? [{ typeLabel: item.typeLabel, name: item.name, nameCls: item.nameCls }] : [];
         day.items.push(item);
         return;
       }
@@ -153,10 +154,20 @@
       cards.push(item);
     });
 
-    // Open-ended story blocks always come before the boxed cards of the day.
+    // All story blocks of a day share one frame (titles first, then text
+    // lines), and that block always comes before the boxed cards of the day.
     days.forEach(function (dy) {
-      dy.items = dy.items.filter(function (it) { return it.isStory; })
-        .concat(dy.items.filter(function (it) { return !it.isStory; }));
+      var stories = dy.items.filter(function (it) { return it.isStory; });
+      var others = dy.items.filter(function (it) { return !it.isStory; });
+      if (stories.length > 1) {
+        var merged = stories[0];
+        stories.slice(1).forEach(function (s) {
+          merged.titles = merged.titles.concat(s.titles);
+          merged.fullSubs = merged.fullSubs.concat(s.fullSubs);
+        });
+        stories = [merged];
+      }
+      dy.items = stories.concat(others);
     });
 
     // A day holding only open-ended story blocks that starts inside a card's
@@ -288,12 +299,13 @@
       '</li>';
   }
 
-  // A story block without a name holds only the day's open-ended text lines.
+  // A story block lists its main story titles (if any), then text lines.
   function storyBody(item) {
-    return (item.name ? '<div class="title-row">' +
-      '<span class="tag tag-story">' + esc(item.typeLabel) + '</span>' +
-      '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span></div>' : '') +
-      subsHtml(item.fullSubs);
+    return item.titles.map(function (t) {
+      return '<div class="title-row">' +
+        '<span class="tag tag-story">' + esc(t.typeLabel) + '</span>' +
+        '<span class="title ' + t.nameCls + '">' + esc(t.name) + '</span></div>';
+    }).join('') + subsHtml(item.fullSubs);
   }
 
   function storyHtml(item) {
