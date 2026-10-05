@@ -47,7 +47,7 @@ body{margin:0}
 .day-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .raid.m-card{margin:0 0 0 16px;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 26px 0 4px;font-size:13.5px;line-height:1.4}
 .raid-name{min-width:0;font-weight:600;color:var(--ink-soft);position:relative;top:1px}
-.raid-phase{flex:none;font-size:12px;font-weight:700;color:var(--raid)}
+.raid-phase{flex:none;font-size:12px;font-weight:700;color:var(--raid);position:relative;top:2px}
 .armors{display:inline-flex;align-items:center;gap:6px}
 .armor-group{display:inline-flex;gap:2px}
 .armor-sep{font-size:13px;font-weight:500;color:var(--ink-soft)}
