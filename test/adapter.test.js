@@ -60,11 +60,11 @@ test('converts the example rows from the binding prompt', () => {
       ],
       weeks: [
         { battles: [{ type: 'tactical', boss: '호위', armor: [] }],
-          subs: ['2배 경험치 (08.15–08.16)'] },
+          subs: [{ label: '2배', text: '경험치 (08.15–08.16)' }] },
         { battles: [{ type: 'grand', boss: '비나', armor: [['light', 'heavy'], ['elastic']] }] }
       ] },
     { type: 'story', start: '2026-08-19', name: '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」',
-      fullSubs: ['미니스토리 「이부키 가출 사건」'] },
+      fullSubs: [{ label: '미니스토리', text: '「이부키 가출 사건」' }] },
     { type: 'raid', start: '2026-07-29', end: '2026-08-25', name: '세트', armor: ['light'] }
   ]);
 });
@@ -101,7 +101,7 @@ test('pickups outside any event become a gap card; orphan subs are dropped', () 
         { name: '마코토, 아코(드레스)', kind: 'rerun', tier: 'limited' },
         { name: '사츠키', kind: 'rerun', tier: 'normal' }
       ],
-      fullSubs: ['2배 임무(Hard)'] }
+      fullSubs: [{ label: '2배', text: '임무(Hard)' }] }
   ]);
 });
 
@@ -135,7 +135,7 @@ test('open-ended rows without a main story form a text-only story block above ca
   const events = convert(csv, schema);
   assert.deepEqual(events.find((e) => e.type === 'story'), {
     type: 'story', start: '2026-07-22', name: '',
-    fullSubs: ['상설 이벤트 햇살 드는 그녀들의 소야곡', '애용품 카린 · 에리 · 시미코']
+    fullSubs: [{ label: '상설 이벤트', text: '햇살 드는 그녀들의 소야곡' }, { label: '애용품', text: '카린 · 에리 · 시미코' }]
   });
   const day = Timeline.buildRows(events, null).rows.find((r) => r.isDay);
   assert.deepEqual(day.items.map((it) => (it.isStory ? 'story' : it.type)), ['story', 'gap']);
@@ -199,5 +199,17 @@ test('story blocks of the same day share one frame', () => {
   const html = Timeline.rowsHtml([day]);
   assert.equal((html.match(/class="story"/g) || []).length, 1);
   assert.equal((html.match(/tag-story/g) || []).length, 2);
-  assert.match(html, /미니스토리 「테스트 미니」/);
+  assert.match(html, /<span class="sub-label">미니스토리<\/span><span class="">「테스트 미니」<\/span>/);
+});
+
+test('group story lines show the episode range', () => {
+  const schema = SCHEMA_CSV + '\n그룹스토리,제목,화수,,,';
+  const csv = scheduleCsv([
+    '2021-07-29,,,,,,그룹스토리,선도부,2,,,',
+    '2021-07-29,,,,,,그룹스토리,수행부,3-4,,,'
+  ]);
+  assert.deepEqual(convert(csv, schema)[0].fullSubs, [
+    { label: '그룹스토리', text: '「선도부」 2화' },
+    { label: '그룹스토리', text: '「수행부」 3-4화' }
+  ]);
 });

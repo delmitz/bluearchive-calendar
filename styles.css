@@ -64,7 +64,13 @@ body{margin:0}
 .pickup-list{min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:2px}
 .pickup-name{font-size:14px;font-weight:500;line-height:1.4}
 .battle-name{font-size:14px;font-weight:500;line-height:1.4;position:relative;top:1px}
-.sub{margin:0;font-size:13.5px;font-weight:500}
+/* Sub-event lines: a dot and a slightly emphasized kind label colored after
+   the block they sit in (gray in cards, story colors in story blocks). */
+.sub{margin:0;font-size:13.5px;font-weight:500;display:flex;align-items:baseline;gap:6px;--sub-dot:var(--ink-soft);--sub-ink:var(--ink-soft)}
+.sub::before{content:"";width:5px;height:5px;border-radius:999px;background:var(--sub-dot);flex:none;position:relative;top:-2px}
+.sub-label{flex:none;font-size:12px;font-weight:700;color:var(--sub-ink)}
+.sub > span:last-child{min-width:0}
+.story .sub,.story-tail .sub{--sub-dot:var(--story);--sub-ink:var(--story-ink)}
 .week{display:flex;flex-direction:column;gap:4px;padding:8px 16px;margin:0 0 6px 14px;border:1px solid var(--zone-line);border-right:none;border-radius:9px 0 0 9px}
 .week-label{margin:0;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 /* Open-ended story blocks that start inside a card's period: the frame

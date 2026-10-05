@@ -236,27 +236,32 @@
     return out;
   }
 
+  // Sub-event line as { label, text }: the label is the kind (or the
+  // campaign rate) shown slightly emphasized before the text.
+  function line(label, text) { return text ? { label: label, text: text } : ''; }
   function subText(r) {
     switch (r.type) {
       case '캠페인': {
         var items = [r.get('항목1'), r.get('항목2')].filter(Boolean).join('·');
-        var rate = r.get('2배/3배');
-        var text = rate ? (rate + ' ' + items) : items;
-        if (!text) return '';
+        if (!items) return '';
         if (r.end && (r.endT - r.t) / DAY_MS < 7) {
-          text += ' (' + md(r.t) + '–' + md(r.endT - DAY_MS) + ')';
+          items += ' (' + md(r.t) + '–' + md(r.endT - DAY_MS) + ')';
         }
-        return text;
+        return line(r.get('2배/3배'), items);
       }
-      case '미니스토리': return r.get('제목') ? '미니스토리 「' + r.get('제목') + '」' : '';
-      case '그룹스토리': return r.get('제목') ? '그룹스토리 「' + r.get('제목') + '」' : '';
-      case '이벤트(상설)': return r.get('이벤트명') ? '상설 이벤트 ' + r.get('이벤트명') : '';
+      case '미니스토리': return r.get('제목') ? line('미니스토리', '「' + r.get('제목') + '」') : '';
+      case '그룹스토리': {
+        // Group stories repeat names across releases; the episode range tells them apart.
+        var ep = r.get('화수');
+        return r.get('제목') ? line('그룹스토리', '「' + r.get('제목') + '」' + (ep ? ' ' + ep + '화' : '')) : '';
+      }
+      case '이벤트(상설)': return line('상설 이벤트', r.get('이벤트명'));
       case '애용품': {
         var names = [1, 2, 3, 4, 5].map(function (i) { return r.get('캐릭터' + i); }).filter(Boolean);
-        return names.length ? '애용품 ' + names.join(' · ') : '';
+        return line('애용품', names.join(' · '));
       }
-      case '업데이트': return r.get('내용');
-      case '가이드미션': return r.get('제목');
+      case '업데이트': return line('업데이트', r.get('내용'));
+      case '가이드미션': return line('가이드미션', r.get('제목'));
       default: return '';
     }
   }

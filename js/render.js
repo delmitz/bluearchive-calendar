@@ -14,7 +14,12 @@
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function md(t) { var d = new Date(t); return pad(d.getUTCMonth() + 1) + '.' + pad(d.getUTCDate()); }
   function isPlaceholder(text) { return /^\[.*\]$/.test(String(text).trim()); }
-  function textItem(text) { return { text: text, cls: isPlaceholder(text) ? 'ph' : '' }; }
+  // Accepts a plain string or a sub-event line { label, text }.
+  function textItem(v) {
+    var text = typeof v === 'object' && v ? v.text : v;
+    var label = typeof v === 'object' && v ? (v.label || '') : '';
+    return { text: text, label: label, cls: isPlaceholder(text) ? 'ph' : '' };
+  }
 
   var PICKUP_KIND = { 'new': '신규', rerun: '복각' };
   var PICKUP_TIER = { normal: '통상', limited: '한정', fes: '페스' };
@@ -263,7 +268,8 @@
 
   function subsHtml(list) {
     return list.map(function (s) {
-      return '<p class="sub ' + s.cls + '">' + esc(s.text) + '</p>';
+      return '<p class="sub">' + (s.label ? '<span class="sub-label">' + esc(s.label) + '</span>' : '') +
+        '<span class="' + s.cls + '">' + esc(s.text) + '</span></p>';
     }).join('');
   }
 
