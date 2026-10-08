@@ -70,6 +70,8 @@
     var allFes = items.length > 0 && items.every(function (p) { return p.tier === 'fes'; });
     items.forEach(function (p) {
       p.pkCls = 'pk pk-' + p.tier + (p.isNew ? ' pk-isnew' : '');
+      // New pickups get a bold name in their badge color (blue for normal).
+      p.nameCls = p.isNew ? ' pk-new-name pk-new-' + p.tier : '';
       if (allFes || p.tier === 'normal') p.label = '';
     });
     return {
@@ -251,7 +253,7 @@
       '<div class="pickup-list">' + g.pickups.map(function (p) {
         return '<div class="row-wrap"><span class="' + p.pkCls + '">' +
           (p.isNew ? '<span class="pk-badge">NEW</span>' : '') + esc(p.label) + '</span>' +
-          '<span class="pickup-name ' + p.cls + '">' + esc(p.text) + '</span></div>';
+          '<span class="pickup-name ' + p.cls + p.nameCls + '">' + esc(p.text) + '</span></div>';
       }).join('') + '</div></div>';
   }
 
