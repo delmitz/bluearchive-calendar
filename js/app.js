@@ -1,5 +1,6 @@
 // Entry point: fetches the published sheet tabs, converts them to EVENTS
-// and renders the timeline. "Load earlier" reveals older weeks client-side.
+// and renders the timeline from the events running today on. "Load earlier"
+// reveals older weeks client-side.
 (function () {
   'use strict';
 
@@ -33,6 +34,18 @@
   function todayT() {
     var d = new Date();
     return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  // Earliest start among events still running today (start before today,
+  // last day today or later), so the first view begins with them.
+  function initialFrom(list, today) {
+    var from = today;
+    list.forEach(function (e) {
+      if (!e.end) return;
+      var start = Timeline.parseDay(e.start);
+      if (start < from && Timeline.parseDay(e.end) >= today) from = start;
+    });
+    return from;
   }
 
   function setStatus(text, retry) {
@@ -71,7 +84,7 @@
       events = Adapter.sheetRowsToEvents(Adapter.csvToRecords(texts[0]), schema, {
         warn: function (msg) { console.warn('[timeline] ' + msg); }
       });
-      fromT = todayT() - PAGE_WEEKS * WEEK_MS;
+      fromT = initialFrom(events, todayT());
       render();
     }).catch(function (err) {
       console.error(err);
