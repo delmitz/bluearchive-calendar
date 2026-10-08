@@ -62,16 +62,11 @@
     return out;
   }
 
-  // When every pickup in a group is fes, the group head becomes "페스픽업"
-  // and the per-row tier text is dropped. "통상" is never spelled out.
-  var KIND_ORDER = { 'new': 0, rerun: 1 };
-  var TIER_ORDER = { fes: 0, limited: 1, normal: 2 };
+  // Pickups keep the sheet's row order. When every pickup in a group is fes,
+  // the group head becomes "페스픽업" and the per-row tier text is dropped.
+  // "통상" is never spelled out.
   function pickupGroup(list) {
-    var items = list.map(pickupItem).map(function (p, i) { p.i = i; return p; })
-      .sort(function (a, b) {
-        return KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
-          TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.i - b.i;
-      });
+    var items = list.map(pickupItem);
     var allFes = items.length > 0 && items.every(function (p) { return p.tier === 'fes'; });
     items.forEach(function (p) {
       p.pkCls = 'pk pk-' + p.tier + (p.isNew ? ' pk-isnew' : '');
@@ -188,6 +183,8 @@
       host.midStories.push({
         label: dy.label + ' ~',
         week: Math.floor((dy.t - host.t) / (7 * DAY_MS)),
+        // Share of the card period elapsed when the story starts.
+        frac: (dy.t - host.t) / (host.endT - host.t + DAY_MS),
         items: dy.items
       });
       return false;
@@ -295,7 +292,8 @@
     }
     // Story blocks starting mid-card: their frame runs behind the card (placed
     // by layout()), their text follows it, and raid end lines come last.
-    return '<li class="span-story" data-week="' + item.midStories[0].week + '">' +
+    return '<li class="span-story" data-week="' + item.midStories[0].week +
+      '" data-frac="' + item.midStories[0].frac.toFixed(4) + '">' +
       '<span class="span-frame" aria-hidden="true"></span>' + card +
       '<div class="story-tail">' + item.midStories.map(function (ms) {
         return '<p class="story-tail-date">' + esc(ms.label) + '</p>' +
@@ -340,7 +338,15 @@
       var card = span.querySelector('.card');
       var week = card.querySelector('[data-week="' + span.getAttribute('data-week') + '"]');
       var spanTop = span.getBoundingClientRect().top;
-      var top = week ? week.getBoundingClientRect().top - spanTop : 0;
+      var top;
+      if (week) {
+        top = week.getBoundingClientRect().top - spanTop;
+      } else {
+        // No week zones: branch off at the point of the card matching the
+        // start date's share of the card period (e.g. the middle for week 2 of 2).
+        var rect = card.getBoundingClientRect();
+        top = rect.top - spanTop + rect.height * parseFloat(span.getAttribute('data-frac') || '0');
+      }
       span.style.setProperty('--frame-top', top + 'px');
       // The frame's line starts fading where its text ends and is gone
       // within about one line.

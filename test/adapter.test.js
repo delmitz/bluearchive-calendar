@@ -160,7 +160,7 @@ test('story-only days inside a card period are drawn behind that card', () => {
   assert.equal(card.midStories[0].week, 1);
   assert.equal(card.midStories[0].items[0].name, '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」');
   const html = Timeline.rowsHtml(view.rows);
-  assert.match(html, /<li class="span-story" data-week="1">/);
+  assert.match(html, /<li class="span-story" data-week="1" data-frac="[0-9.]+">/);
   // The raid ending with this card comes after the story text.
   assert.ok(html.indexOf('story-tail') < html.indexOf('raid-detached'));
 });
@@ -228,4 +228,21 @@ test('permanent events (이벤트 + 상설) become story text lines', () => {
   const events = convert(csv, schema);
   assert.deepEqual(events.map((e) => e.type), ['new', 'story']);
   assert.deepEqual(events[1].fullSubs, [{ label: '상설 이벤트', text: '빛으로 나아가는 그녀들의 소야곡' }]);
+});
+
+test('mid-card story blocks carry the elapsed share of the card period', () => {
+  const view = Timeline.buildRows(convert(EXAMPLE), null);
+  const card = view.rows.find((r) => r.isDay && r.start === '2026-08-12').items[0];
+  assert.equal(card.midStories[0].frac, 7 / 14);
+  assert.match(Timeline.rowsHtml(view.rows), /data-frac="0\.5000"/);
+});
+
+test('pickups keep the sheet row order', () => {
+  const csv = scheduleCsv([
+    '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-05,2026-08-19,14,,,,픽업,복각학생,,복각,통상,',
+    '2026-08-05,2026-08-19,14,,,,픽업,신규학생,,신규,한정,'
+  ]);
+  const card = Timeline.buildRows(convert(csv), null).rows.find((r) => r.isDay).items[0];
+  assert.deepEqual(card.pickups.map((p) => p.text), ['복각학생', '신규학생']);
 });
