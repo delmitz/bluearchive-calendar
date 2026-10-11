@@ -37,11 +37,12 @@
   }
 
   // Earliest start among events still running today (start before today,
-  // last day today or later), so the first view begins with them.
+  // last day today or later), so the first view begins with them. Raids are
+  // skipped: a running raid's start may be hidden, its end line still shows.
   function initialFrom(list, today) {
     var from = today;
     list.forEach(function (e) {
-      if (!e.end) return;
+      if (!e.end || e.type === 'raid') return;
       var start = Timeline.parseDay(e.start);
       if (start < from && Timeline.parseDay(e.end) >= today) from = start;
     });
