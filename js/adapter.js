@@ -108,7 +108,10 @@
     var d = new Date(t);
     return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
   }
-  function md(t) { var d = new Date(t); return pad(d.getUTCMonth() + 1) + '.' + pad(d.getUTCDate()); }
+  var WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+  function wd(t) { return WEEKDAYS[new Date(t).getUTCDay()]; }
+  // Short period as weekdays: "[토~일]", or "[토]" for a single day.
+  function weekdayRange(t, lastT) { return ' [' + wd(t) + (lastT > t ? '~' + wd(lastT) : '') + ']'; }
   function isDay(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s || ''); }
   // Sheet dates may be published in any display format (e.g. "2026. 6. 10. (수)");
   // normalize year/month/day to YYYY-MM-DD, or '' when there is no date.
@@ -230,20 +233,40 @@
     // Pass 3: sub-event text lines. Rows without an end date go into the
     // story block of their start day (the main story, or a text-only block);
     // the rest go into their card and are dropped when no card contains them.
+    // Rate campaigns (2배, 3배, ...) of the same rate in the same list share
+    // one line; campaigns without a rate keep their own line.
+    var campaigns = [];
     rows.forEach(function (r) {
       var text = subText(r);
       if (!text) return;
+      var target, key;
       if (!r.end) {
-        var story = out.filter(function (e) { return e.type === 'story' && e.start === r.start; })[0];
-        if (!story) { story = { type: 'story', start: r.start, name: '' }; out.push(story); }
-        push(story, 'fullSubs', text);
+        target = out.filter(function (e) { return e.type === 'story' && e.start === r.start; })[0];
+        if (!target) { target = { type: 'story', start: r.start, name: '' }; out.push(target); }
+        key = 'fullSubs';
+      } else {
+        var card = findCard(r);
+        if (!card) return;
+        target = slot(card, r);
+        key = target === card ? 'fullSubs' : 'subs';
+      }
+      var list = target[key] = target[key] || [];
+      if (r.type === '캠페인' && r.get('2배/3배')) {
+        var rate = r.get('2배/3배');
+        // Experience campaigns always get their own line, below the others.
+        var exp = r.get('항목1') === '경험치' || r.get('항목2') === '경험치';
+        var c = campaigns.filter(function (x) { return x.list === list && x.rate === rate && x.exp === exp; })[0];
+        if (!c) {
+          c = { list: list, rate: rate, exp: exp, order: campaigns.length, groups: [], line: { label: rate } };
+          campaigns.push(c);
+          list.push(c.line);
+        }
+        addCampaign(c, r);
         return;
       }
-      var card = findCard(r);
-      if (!card) return;
-      var target = slot(card, r);
-      push(target, target === card ? 'fullSubs' : 'subs', text);
+      list.push(text);
     });
+    sortCampaignLines(campaigns);
 
     out.forEach(function (e) {
       delete e._t; delete e._endT; delete e._gapKey;
@@ -254,16 +277,49 @@
   // Sub-event line as { label, text }: the label is the kind (or the
   // campaign rate) shown slightly emphasized before the text.
   function line(label, text) { return text ? { label: label, text: text } : ''; }
+  function campaignItems(r) { return [r.get('항목1'), r.get('항목2')].filter(Boolean).join('·'); }
+
+  // Adds a campaign row to the line of its rate. Rows with the same period
+  // join one group ("A·B"); groups are separated by ", ", full-length groups
+  // first, then short ones by start date, each followed by its weekdays.
+  function addCampaign(c, r) {
+    var period = r.start + '|' + (r.end || '');
+    var short = !!r.end && (r.endT - r.t) / DAY_MS < 7;
+    var g = c.groups.filter(function (x) { return x.period === period; })[0];
+    if (g) g.items += '·' + campaignItems(r);
+    else c.groups.push({ period: period, t: r.t, short: short, items: campaignItems(r),
+      suffix: short ? weekdayRange(r.t, r.endT - DAY_MS) : '' });
+    c.groups.sort(function (a, b) { return (a.short - b.short) || (a.t - b.t); });
+    c.line.text = c.groups.map(function (x) { return x.items + x.suffix; }).join(', ');
+  }
+
+  // Within each list, campaign lines that have a full-length group come
+  // first, then by earliest start; other lines keep their positions.
+  // Experience lines are moved to the end of the list.
+  function sortCampaignLines(campaigns) {
+    var lists = [];
+    campaigns.forEach(function (c) { if (lists.indexOf(c.list) < 0) lists.push(c.list); });
+    lists.forEach(function (list) {
+      var mine = campaigns.filter(function (c) { return c.list === list && !c.exp; });
+      var exp = campaigns.filter(function (c) { return c.list === list && c.exp; });
+      var key = function (c) {
+        return { full: c.groups.some(function (g) { return !g.short; }) ? 0 : 1,
+          t: Math.min.apply(null, c.groups.map(function (g) { return g.t; })) };
+      };
+      var sorted = mine.slice().sort(function (a, b) {
+        var ka = key(a), kb = key(b);
+        return (ka.full - kb.full) || (ka.t - kb.t) || (a.order - b.order);
+      });
+      var slots = [];
+      list.forEach(function (v, i) { if (mine.some(function (c) { return c.line === v; })) slots.push(i); });
+      slots.forEach(function (i, k) { list[i] = sorted[k].line; });
+      exp.forEach(function (c) { list.splice(list.indexOf(c.line), 1); list.push(c.line); });
+    });
+  }
+
   function subText(r) {
     switch (r.type) {
-      case '캠페인': {
-        var items = [r.get('항목1'), r.get('항목2')].filter(Boolean).join('·');
-        if (!items) return '';
-        if (r.end && (r.endT - r.t) / DAY_MS < 7) {
-          items += ' (' + md(r.t) + '–' + md(r.endT - DAY_MS) + ')';
-        }
-        return line(r.get('2배/3배'), items);
-      }
+      case '캠페인': return campaignItems(r) ? line(r.get('2배/3배'), campaignItems(r)) : '';
       case '미니스토리': return r.get('제목') ? line('미니스토리', '「' + r.get('제목') + '」') : '';
       case '그룹스토리': {
         // Group stories repeat names across releases; the episode range tells them apart.

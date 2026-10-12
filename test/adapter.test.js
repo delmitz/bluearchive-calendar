@@ -60,7 +60,7 @@ test('converts the example rows from the binding prompt', () => {
       ],
       weeks: [
         { battles: [{ type: 'tactical', boss: '호위', armor: [] }],
-          subs: [{ label: '2배', text: '경험치 (08.15–08.16)' }] },
+          subs: [{ label: '2배', text: '경험치 [토~일]' }] },
         { battles: [{ type: 'grand', boss: '비나', armor: [['light', 'heavy'], ['elastic']] }] }
       ] },
     { type: 'story', start: '2026-08-19', name: '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」',
@@ -245,4 +245,26 @@ test('pickups keep the sheet row order', () => {
   ]);
   const card = Timeline.buildRows(convert(csv), null).rows.find((r) => r.isDay).items[0];
   assert.deepEqual(card.pickups.map((p) => p.text), ['복각학생', '신규학생']);
+});
+
+test('rate campaigns share one line per rate, full-length items first, experience last', () => {
+  const csv = scheduleCsv([
+    '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-14,2026-08-16,2,,,,캠페인,2배,경험치,,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,2배,지명수배,,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,2배,학원교류회,,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,,1일 1회 무료 10회 모집,,,',
+    '2026-08-12,2026-08-16,4,,,,캠페인,3배,임무(Normal),,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,3배,특별의뢰,,,',
+    '2026-08-15,2026-08-18,3,,,,캠페인,3배,임무(Hard),,,',
+    '2026-08-12,2026-08-19,7,,,,애용품,카린,,,,'
+  ]);
+  const card = convert(csv)[0];
+  assert.deepEqual(card.weeks[1].subs, [
+    { label: '2배', text: '지명수배·학원교류회' },
+    { label: '', text: '1일 1회 무료 10회 모집' },
+    { label: '3배', text: '특별의뢰, 임무(Normal) [수~토], 임무(Hard) [토~월]' },
+    { label: '애용품', text: '카린' },
+    { label: '2배', text: '경험치 [금~토]' }
+  ]);
 });

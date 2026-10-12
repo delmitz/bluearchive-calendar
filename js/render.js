@@ -265,10 +265,15 @@
     }).join('');
   }
 
+  // Weekday ranges of short campaigns ("[화~금]") are shown smaller and muted.
+  function whenHtml(html) {
+    return html.replace(/\[([일월화수목금토](?:~[일월화수목금토])?)\]/g, '<span class="sub-when">[$1]</span>');
+  }
+
   function subsHtml(list) {
     return list.map(function (s) {
       return '<p class="sub">' + (s.label ? '<span class="sub-label">' + esc(s.label) + '</span>' : '') +
-        '<span class="' + s.cls + '">' + esc(s.text) + '</span></p>';
+        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) + '</span></p>';
     }).join('');
   }
 

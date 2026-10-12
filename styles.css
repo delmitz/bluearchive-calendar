@@ -74,6 +74,7 @@ body{margin:0}
 .sub::before{content:"";width:5px;height:5px;border-radius:999px;background:var(--sub-dot);flex:none;position:relative;top:-2px}
 .sub-label{flex:none;font-size:12px;font-weight:700;color:var(--sub-ink)}
 .sub > span:last-child{min-width:0}
+.sub-when{font-size:12px;font-weight:500;color:var(--ink-soft);opacity:.75}
 .story .sub,.story-tail .sub{--sub-dot:var(--story);--sub-ink:var(--story-ink)}
 .week{display:flex;flex-direction:column;gap:4px;padding:8px 16px;margin:0 0 6px 14px;border:1px solid var(--zone-line);border-right:none;border-radius:9px 0 0 9px}
 .week-label{margin:0;font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--ink-soft);font-variant-numeric:tabular-nums}
