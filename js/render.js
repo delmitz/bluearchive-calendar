@@ -228,6 +228,18 @@
     });
   }
 
+  // "Main ~Sub~" -> { main, sub }; sub is '' when the title has no subtitle.
+  function splitTitle(name) {
+    var m = String(name).match(/^(.*?\S)\s*[~～]\s*(.*?)\s*[~～]?\s*$/);
+    return m && m[2] ? { main: m[1], sub: m[2] } : { main: String(name), sub: '' };
+  }
+
+  // Event card title with its ~subtitle~ in small muted text on the same line.
+  function cardTitleHtml(name) {
+    var t = splitTitle(name);
+    return esc(t.main) + (t.sub ? ' <span class="title-sub">~' + esc(t.sub) + '~</span>' : '');
+  }
+
   function armorsHtml(groups) {
     if (!groups.length) return '';
     return '<span class="armors">' + groups.map(function (g) {
@@ -292,7 +304,7 @@
       // Gap cards (pickups/battles outside any event) have no tag or title row.
       (item.type === 'gap' ? '' :
         '<div class="title-row"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
-        (item.name ? '<span class="title ' + item.nameCls + '">' + esc(item.name) + '</span>' : '') + '</div>') +
+        (item.name ? '<span class="title ' + item.nameCls + '">' + cardTitleHtml(item.name) + '</span>' : '') + '</div>') +
       pickupsHtml(item) + battlesHtml(item.battles) + subsHtml(item.fullSubs) +
       '</div>' + weeks + '</' + tag + '>';
     if (!item.midStories.length) {
@@ -387,7 +399,8 @@
     }).join('');
   }
 
-  var api = { buildRows: buildRows, rowsHtml: rowsHtml, layout: layout, parseDay: parseDay };
+  var api = { buildRows: buildRows, rowsHtml: rowsHtml, layout: layout, parseDay: parseDay,
+    splitTitle: splitTitle };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Timeline = api;
 })(this);

@@ -3,6 +3,8 @@
 (function (root) {
   'use strict';
 
+  var Timeline = typeof module !== 'undefined' && module.exports ? require('./render.js') : root.Timeline;
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -15,14 +17,8 @@
     return p[0].slice(2) + '.' + p[1] + '.' + p[2];
   }
 
-  // "Main ~Sub~" -> { main, sub }; sub is '' when the title has no subtitle.
-  function splitTitle(name) {
-    var m = String(name).match(/^(.*?\S)\s*[~～]\s*(.*?)\s*[~～]?\s*$/);
-    return m && m[2] ? { main: m[1], sub: m[2] } : { main: String(name), sub: '' };
-  }
-
   function nameHtml(name) {
-    var t = splitTitle(name);
+    var t = Timeline.splitTitle(name);
     return '<span class="ev-main">' + esc(t.main) + '</span>' +
       (t.sub ? '<span class="ev-sub">~' + esc(t.sub) + '~</span>' : '');
   }
@@ -50,7 +46,7 @@
       }).join('') + '</tbody></table>';
   }
 
-  var api = { html: html, shortDay: shortDay, splitTitle: splitTitle };
+  var api = { html: html, shortDay: shortDay };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EventsPage = api;
 })(this);

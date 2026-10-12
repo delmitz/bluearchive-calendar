@@ -299,9 +299,15 @@ test('event history lists first run, reruns and permanent dates, newest first', 
 
 test('event titles split off a ~subtitle~', () => {
   const EventsPage = require('../js/events.js');
-  assert.deepEqual(EventsPage.splitTitle('팬데믹 해저드 ~기적의 팬케이크~'), { main: '팬데믹 해저드', sub: '기적의 팬케이크' });
-  assert.deepEqual(EventsPage.splitTitle('새해의 아페리티프 ~ 신년 한판 승부~'), { main: '새해의 아페리티프', sub: '신년 한판 승부' });
-  assert.deepEqual(EventsPage.splitTitle('람과천청'), { main: '람과천청', sub: '' });
+  assert.deepEqual(Timeline.splitTitle('팬데믹 해저드 ~기적의 팬케이크~'), { main: '팬데믹 해저드', sub: '기적의 팬케이크' });
+  assert.deepEqual(Timeline.splitTitle('새해의 아페리티프 ~ 신년 한판 승부~'), { main: '새해의 아페리티프', sub: '신년 한판 승부' });
+  assert.deepEqual(Timeline.splitTitle('람과천청'), { main: '람과천청', sub: '' });
   assert.match(EventsPage.html([{ name: 'A ~B~', first: '2026-01-01', reruns: [], permanent: '' }]),
     /<th scope="row" class="ev-name"><span class="ev-main">A<\/span><span class="ev-sub">~B~<\/span><\/th>/);
+});
+
+test('event card titles show the subtitle muted on the same line', () => {
+  const csv = scheduleCsv(['2026-08-05,2026-08-19,14,,,,이벤트,팬데믹 해저드 ~기적의 팬케이크~,복각,,,']);
+  const html = Timeline.rowsHtml(Timeline.buildRows(convert(csv), null).rows);
+  assert.match(html, /팬데믹 해저드 <span class="title-sub">~기적의 팬케이크~<\/span>/);
 });
