@@ -156,7 +156,7 @@ test('story-only days inside a card period are drawn behind that card', () => {
   assert.equal(view.rows.some((r) => r.isDay && r.start === '2026-08-19'), false);
   const card = view.rows.find((r) => r.isDay && r.start === '2026-08-12').items[0];
   assert.equal(card.midStories.length, 1);
-  assert.equal(card.midStories[0].label, '08.19 (수) ~');
+  assert.equal(card.midStories[0].label, '08.19 (수)');
   assert.equal(card.midStories[0].week, 1);
   assert.equal(card.midStories[0].items[0].name, '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」');
   const html = Timeline.rowsHtml(view.rows);

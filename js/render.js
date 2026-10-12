@@ -187,7 +187,7 @@
       });
       if (!host) return true;
       host.midStories.push({
-        label: dy.label + ' ~',
+        label: dy.label,
         week: Math.floor((dy.t - host.t) / (7 * DAY_MS)),
         // Share of the card period elapsed when the story starts.
         frac: (dy.t - host.t) / (host.endT - host.t + DAY_MS),
