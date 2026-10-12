@@ -243,7 +243,7 @@
       '<span class="tag tag-raid">제약해제결전</span>' +
       '<span class="raid-name ' + r.nameCls + '">' + esc(r.name) + '</span>' +
       armorsHtml(r.armorGroups) +
-      '<span class="raid-phase">' + (phase === 'start' ? '시작 (' + r.weeks + '주간)' : '종료') + '</span>' +
+      '<span class="raid-phase">' + (phase === 'start' ? '시작 (' + r.weeks + '주간)' : '종료 (' + md(r.endT) + ')') + '</span>' +
       '</' + tag + '>';
   }
 
