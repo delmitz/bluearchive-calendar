@@ -50,6 +50,21 @@ body{margin:0}
 .ev-table thead th{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--band);white-space:nowrap}
 .ev-name{font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .ev-date{width:1%;white-space:nowrap}
+.ev-sub{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink-soft)}
+/* Narrow screens: each row is a grid so the subtitle runs under the date
+   columns too instead of wrapping inside the narrow title column. */
+@media (max-width:480px){
+.ev-table,.ev-table thead,.ev-table tbody{display:block}
+.ev-table tr{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,54px);column-gap:6px;padding:9px 10px;border-bottom:1px solid var(--line)}
+.ev-table tbody tr:last-child{border-bottom:none}
+.ev-table thead tr{background:var(--band)}
+.ev-table th,.ev-table td{padding:0;border-bottom:none}
+.ev-table thead th{background:none}
+.ev-name{display:contents}
+.ev-main{grid-column:1;grid-row:1}
+.ev-sub{grid-column:1/-1;grid-row:2}
+.ev-date{grid-row:1;width:auto}
+}
 .ev-day{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.45}
 .ev-none{color:var(--ink-soft);opacity:.5}
 .load-more{display:flex;justify-content:center;margin-bottom:20px}
@@ -119,4 +134,4 @@ body{margin:0}
 .status button{margin-top:12px;min-height:44px;padding:0 20px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
 
 @media (max-width:480px){.tag{font-size:11px}.pk{font-size:11.5px}.m-page{padding-left:16px!important;padding-right:16px!important}.m-card{margin-left:8px!important}.m-head{padding-left:14px!important;padding-right:14px!important}.m-week{margin-left:10px!important;padding-left:14px!important;padding-right:14px!important}}
-@media (max-width:480px){.site-tabs-in{padding-left:16px;padding-right:16px}.ev-table{font-size:13px}.ev-table th,.ev-table td{padding:9px 8px}.ev-day{font-size:12px}}
+@media (max-width:480px){.site-tabs-in{padding-left:16px;padding-right:16px}.ev-table{font-size:13px}.ev-day{font-size:12px}}

@@ -296,3 +296,12 @@ test('event history lists first run, reruns and permanent dates, newest first', 
   assert.match(html, /<time class="ev-day" datetime="2026-08-12">26\.08\.12<\/time>/);
   assert.match(html, /<td class="ev-date"><span class="ev-none">–<\/span><\/td>/);
 });
+
+test('event titles split off a ~subtitle~', () => {
+  const EventsPage = require('../js/events.js');
+  assert.deepEqual(EventsPage.splitTitle('팬데믹 해저드 ~기적의 팬케이크~'), { main: '팬데믹 해저드', sub: '기적의 팬케이크' });
+  assert.deepEqual(EventsPage.splitTitle('새해의 아페리티프 ~ 신년 한판 승부~'), { main: '새해의 아페리티프', sub: '신년 한판 승부' });
+  assert.deepEqual(EventsPage.splitTitle('람과천청'), { main: '람과천청', sub: '' });
+  assert.match(EventsPage.html([{ name: 'A ~B~', first: '2026-01-01', reruns: [], permanent: '' }]),
+    /<th scope="row" class="ev-name"><span class="ev-main">A<\/span><span class="ev-sub">~B~<\/span><\/th>/);
+});

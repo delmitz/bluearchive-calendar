@@ -15,6 +15,18 @@
     return p[0].slice(2) + '.' + p[1] + '.' + p[2];
   }
 
+  // "Main ~Sub~" -> { main, sub }; sub is '' when the title has no subtitle.
+  function splitTitle(name) {
+    var m = String(name).match(/^(.*?\S)\s*[~～]\s*(.*?)\s*[~～]?\s*$/);
+    return m && m[2] ? { main: m[1], sub: m[2] } : { main: String(name), sub: '' };
+  }
+
+  function nameHtml(name) {
+    var t = splitTitle(name);
+    return '<span class="ev-main">' + esc(t.main) + '</span>' +
+      (t.sub ? '<span class="ev-sub">~' + esc(t.sub) + '~</span>' : '');
+  }
+
   function dayHtml(day) {
     return '<time class="ev-day" datetime="' + day + '">' + shortDay(day) + '</time>';
   }
@@ -31,14 +43,14 @@
       '<th scope="col" class="ev-name-col">이벤트</th>' +
       '<th scope="col">신규</th><th scope="col">복각</th><th scope="col">상설</th>' +
       '</tr></thead><tbody>' + list.map(function (e) {
-        return '<tr><th scope="row" class="ev-name">' + esc(e.name) + '</th>' +
+        return '<tr><th scope="row" class="ev-name">' + nameHtml(e.name) + '</th>' +
           cellHtml(e.first ? [e.first] : []) +
           cellHtml(e.reruns) +
           cellHtml(e.permanent ? [e.permanent] : []) + '</tr>';
       }).join('') + '</tbody></table>';
   }
 
-  var api = { html: html, shortDay: shortDay };
+  var api = { html: html, shortDay: shortDay, splitTitle: splitTitle };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.EventsPage = api;
 })(this);
