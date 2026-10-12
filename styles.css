@@ -50,9 +50,11 @@ body{margin:0}
 .ev-table thead th{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--band);white-space:nowrap}
 .ev-name{font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .ev-date{width:1%;white-space:nowrap}
-.ev-table .ev-date{text-align:center}
+.ev-table .ev-date{text-align:center;vertical-align:middle}
 .ev-table thead th{text-align:center}
 .ev-sub{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink-soft)}
+.ev-welfare{display:flex;align-items:baseline;gap:6px;margin-top:4px;font-size:12.5px;font-weight:500}
+.ev-welfare-label{flex:none;font-size:11px;font-weight:700;padding:0 6px;border:1px solid var(--ink-soft);border-radius:999px;color:var(--ink-soft);line-height:1.5}
 /* Narrow screens: each row is a grid so the subtitle runs under the date
    columns too instead of wrapping inside the narrow title column. */
 @media (max-width:480px){
@@ -65,7 +67,8 @@ body{margin:0}
 .ev-name{display:contents}
 .ev-main{grid-column:1;grid-row:1}
 .ev-sub{grid-column:1/-1;grid-row:2}
-.ev-date{grid-row:1;width:auto}
+.ev-welfare{grid-column:1/-1}
+.ev-date{grid-row:1;width:auto;align-self:center}
 }
 .ev-day{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.45}
 .ev-none{color:var(--ink-soft);opacity:.5}

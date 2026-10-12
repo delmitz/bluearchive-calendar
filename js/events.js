@@ -17,10 +17,12 @@
     return p[0].slice(2) + '.' + p[1] + '.' + p[2];
   }
 
-  function nameHtml(name) {
-    var t = Timeline.splitTitle(name);
+  function nameHtml(e) {
+    var t = Timeline.splitTitle(e.name);
     return '<span class="ev-main">' + esc(t.main) + '</span>' +
-      (t.sub ? '<span class="ev-sub">~' + esc(t.sub) + '~</span>' : '');
+      (t.sub ? '<span class="ev-sub">~' + esc(t.sub) + '~</span>' : '') +
+      (e.welfare ? '<span class="ev-welfare"><span class="ev-welfare-label">배포</span>' +
+        esc(e.welfare) + '</span>' : '');
   }
 
   function dayHtml(day) {
@@ -39,7 +41,7 @@
       '<th scope="col" class="ev-name-col">이벤트</th>' +
       '<th scope="col">신규</th><th scope="col">복각</th><th scope="col">상설</th>' +
       '</tr></thead><tbody>' + list.map(function (e) {
-        return '<tr><th scope="row" class="ev-name">' + nameHtml(e.name) + '</th>' +
+        return '<tr><th scope="row" class="ev-name">' + nameHtml(e) + '</th>' +
           cellHtml(e.first ? [e.first] : []) +
           cellHtml(e.reruns) +
           cellHtml(e.permanent ? [e.permanent] : []) + '</tr>';

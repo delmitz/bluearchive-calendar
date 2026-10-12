@@ -346,12 +346,14 @@
 
   // Event history for the events page: one entry per event title with the
   // KR start of its first run (신규), reruns (복각) and permanent release
-  // (상설), newest first-run first. Titles without a first-run row sort by
-  // their earliest date.
+  // (상설) and the distributed student (배포캐릭터, from any of its rows),
+  // newest first-run first. Titles without a first-run row sort by their
+  // earliest date.
   function eventHistory(records, schema) {
     var map = schema['이벤트'];
     if (!map) return [];
     var titleCol = column(map, '제목'), kindCol = column(map, '신규/복각');
+    var welfareCol = column(map, '배포캐릭터');
     if (!titleCol || !kindCol) return [];
     var byName = {};
     var list = [];
@@ -360,7 +362,8 @@
       var name = rec[titleCol], start = normDay(rec[COL.start]);
       if (!name || !start) return;
       var e = byName[name];
-      if (!e) { e = byName[name] = { name: name, first: '', reruns: [], permanent: '' }; list.push(e); }
+      if (!e) { e = byName[name] = { name: name, first: '', reruns: [], permanent: '', welfare: '' }; list.push(e); }
+      if (welfareCol && rec[welfareCol] && !e.welfare) e.welfare = rec[welfareCol];
       var kind = rec[kindCol];
       if (kind === '복각') e.reruns.push(start);
       else if (kind === '상설') { if (!e.permanent || start < e.permanent) e.permanent = start; }
