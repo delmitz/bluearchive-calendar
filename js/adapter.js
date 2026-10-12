@@ -29,10 +29,13 @@
     '가이드미션': ['제목'],
     '총결산': ['형식'],
     '기한 만료': ['내용'],
+    '상점': ['대상 상점', '캐릭터 목록'],
     '이벤트(상설)': ['이벤트명'],
     '업데이트': ['내용'],
     '애용품': ['캐릭터1']
   };
+  // Campaign items for account experience (KR official: 계정 경험치).
+  var EXP_ITEMS = { '계정 경험치': true, '경험치': true };
   // Types intentionally not shown on the timeline.
   var HIDDEN_TYPES = { '패키지판매': true };
 
@@ -262,7 +265,7 @@
       if (r.type === '캠페인' && r.get('2배/3배')) {
         var rate = r.get('2배/3배');
         // Experience campaigns always get their own line, below the others.
-        var exp = r.get('항목1') === '경험치' || r.get('항목2') === '경험치';
+        var exp = EXP_ITEMS[r.get('항목1')] || EXP_ITEMS[r.get('항목2')] || false;
         var c = campaigns.filter(function (x) { return x.list === list && x.rate === rate && x.exp === exp; })[0];
         if (!c) {
           c = { list: list, rate: rate, exp: exp, order: campaigns.length, groups: [], line: { label: rate } };
@@ -343,6 +346,8 @@
       case '업데이트': return line('업데이트', r.get('내용'));
       case '가이드미션': return line('가이드미션', r.get('제목'));
       case '기한 만료': return line('기한 만료', r.get('내용'));
+      // Students whose elephs were added to a shop: "숙련 증서 상점" + list.
+      case '상점': return r.get('대상 상점') ? line(r.get('대상 상점') + ' 상점', r.get('캐릭터 목록')) : '';
       // Shown with the full in-game name; 형식 is the reward format.
       case '총결산': return line('샬레 총결산 with 총학생회', r.get('형식'));
       default: return '';
@@ -383,12 +388,46 @@
     return list;
   }
 
+  // Students for the skill certificate page: limited (한정) and fest (페스)
+  // pickup students and event-distributed students (배포캐릭터), each with the
+  // KR date they first appeared (earliest pickup or event start), newest first.
+  // Companion students joined with "&" are listed one by one.
+  function studentLists(records, schema) {
+    var lists = { limited: {}, fes: {}, welfare: {} };
+    function add(list, name, day) {
+      name = name.trim();
+      if (!name || !day) return;
+      if (!list[name] || day < list[name]) list[name] = day;
+    }
+    var pick = schema['픽업'], ev = schema['이벤트'];
+    records.forEach(function (rec) {
+      var day = normDay(rec[COL.start]);
+      if (rec[COL.type] === '픽업' && pick) {
+        var tier = rec[column(pick, '통상/한정/페스')];
+        var list = tier === '한정' ? lists.limited : tier === '페스' ? lists.fes : null;
+        if (!list) return;
+        [column(pick, '캐릭터1'), column(pick, '캐릭터2')].forEach(function (c) {
+          if (c) (rec[c] || '').split('&').forEach(function (n) { add(list, n, day); });
+        });
+      } else if (rec[COL.type] === '이벤트' && ev) {
+        var wc = column(ev, '배포캐릭터');
+        if (wc) add(lists.welfare, rec[wc] || '', day);
+      }
+    });
+    function sorted(list) {
+      return Object.keys(list).map(function (n) { return { name: n, first: list[n] }; })
+        .sort(function (a, b) { return a.first < b.first ? 1 : a.first > b.first ? -1 : (a.name < b.name ? -1 : 1); });
+    }
+    return { limited: sorted(lists.limited), fes: sorted(lists.fes), welfare: sorted(lists.welfare) };
+  }
+
   var api = {
     parseCSV: parseCSV,
     csvToRecords: csvToRecords,
     buildSchema: buildSchema,
     sheetRowsToEvents: sheetRowsToEvents,
-    eventHistory: eventHistory
+    eventHistory: eventHistory,
+    studentLists: studentLists
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Adapter = api;

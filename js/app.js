@@ -19,6 +19,7 @@
   var loadMoreButton = document.getElementById('load-more-button');
 
   var eventsPageEl = document.getElementById('events-page');
+  var certPageEl = document.getElementById('cert-page');
 
   var events = [];
   var fromT = null;
@@ -86,6 +87,7 @@
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
       var records = Adapter.csvToRecords(texts[0]);
       eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
+      certPageEl.innerHTML = GrowthPage.certHtml(Adapter.studentLists(records, schema));
       events = Adapter.sheetRowsToEvents(records, schema, {
         warn: function (msg) { console.warn('[timeline] ' + msg); }
       });
@@ -95,6 +97,7 @@
       console.error(err);
       timelineEl.innerHTML = '';
       eventsPageEl.innerHTML = '<p class="page-empty">이벤트를 불러오지 못했습니다.</p>';
+      certPageEl.innerHTML = '<p class="page-empty">학생 목록을 불러오지 못했습니다.</p>';
       setStatus('일정을 불러오지 못했습니다.', true);
     });
   }

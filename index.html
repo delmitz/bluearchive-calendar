@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키보토스 타임라인</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="styles.css?v=20261013030536">
+<link rel="stylesheet" href="styles.css?v=20261013035811">
 </head>
 <body>
 <div id="app" class="app theme-light">
@@ -27,16 +27,26 @@
 <ol class="timeline" id="timeline" aria-label="이벤트 타임라인"></ol>
 </main>
 <main class="m-page" data-page="growth" hidden>
-<p class="page-empty">조각작 화면은 준비 중입니다.</p>
+<nav class="sub-tabs" aria-label="조각작 메뉴">
+<a href="#/growth/cert" data-subroute="cert">숙련 증서</a>
+<a href="#/growth/hard" data-subroute="hard">하드</a>
+</nav>
+<section data-subpage="cert" id="cert-page">
+<p class="page-empty">학생 목록을 불러오는 중…</p>
+</section>
+<section data-subpage="hard" hidden>
+<p class="page-empty">하드 화면은 준비 중입니다.</p>
+</section>
 </main>
 <main class="m-page" data-page="events" hidden>
 <div id="events-page"><p class="page-empty">이벤트를 불러오는 중…</p></div>
 </main>
 </div>
-<script src="js/nav.js?v=20261013030536"></script>
-<script src="js/adapter.js?v=20261013030536"></script>
-<script src="js/render.js?v=20261013030536"></script>
-<script src="js/events.js?v=20261013030536"></script>
-<script src="js/app.js?v=20261013030536"></script>
+<script src="js/nav.js?v=20261013035811"></script>
+<script src="js/adapter.js?v=20261013035811"></script>
+<script src="js/render.js?v=20261013035811"></script>
+<script src="js/events.js?v=20261013035811"></script>
+<script src="js/growth.js?v=20261013035811"></script>
+<script src="js/app.js?v=20261013035811"></script>
 </body>
 </html>

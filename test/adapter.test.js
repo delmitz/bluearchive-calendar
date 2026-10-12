@@ -93,7 +93,7 @@ test('pickups outside any event become a gap card; orphan subs are dropped', () 
     '2026-07-22,2026-07-29,7,,,,픽업,마코토,아코(드레스),복각,한정,',
     '2026-07-22,2026-07-29,7,,,,픽업,사츠키,,복각,통상,',
     '2026-07-22,2026-07-29,7,,,,캠페인,2배,임무(Hard),,,',
-    '2026-10-07,2026-10-14,7,,,,캠페인,2배,스케줄,,,'
+    '2026-10-07,2026-10-14,7,,,,캠페인,2배,스케쥴,,,'
   ]);
   assert.deepEqual(convert(csv), [
     { type: 'gap', start: '2026-07-22', end: '2026-07-28', name: '',
@@ -250,8 +250,8 @@ test('pickups keep the sheet row order', () => {
 test('rate campaigns share one line per rate, full-length items first, experience last', () => {
   const csv = scheduleCsv([
     '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,,,',
-    '2026-08-14,2026-08-16,2,,,,캠페인,2배,경험치,,,',
-    '2026-08-12,2026-08-19,7,,,,캠페인,2배,지명수배,,,',
+    '2026-08-14,2026-08-16,2,,,,캠페인,2배,계정 경험치,,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,2배,현상수배,,,',
     '2026-08-12,2026-08-19,7,,,,캠페인,2배,학원교류회,,,',
     '2026-08-12,2026-08-19,7,,,,캠페인,,1일 1회 무료 10회 모집,,,',
     '2026-08-12,2026-08-16,4,,,,캠페인,3배,임무(Normal),,,',
@@ -261,11 +261,11 @@ test('rate campaigns share one line per rate, full-length items first, experienc
   ]);
   const card = convert(csv)[0];
   assert.deepEqual(card.weeks[1].subs, [
-    { label: '2배', text: '지명수배·학원교류회' },
+    { label: '2배', text: '현상수배·학원교류회' },
     { label: '', text: '1일 1회 무료 10회 모집' },
     { label: '3배', text: '특별의뢰, 임무(Normal) [수~토], 임무(Hard) [토~월]' },
     { label: '애용품', text: '카린' },
-    { label: '2배', text: '경험치 [금~토]' }
+    { label: '2배', text: '계정 경험치 [금~토]' }
   ]);
 });
 
@@ -349,4 +349,34 @@ test('expiry rows without an end date become story text lines', () => {
   const events = convert(csv, schema);
   assert.deepEqual(events, [{ type: 'story', start: '2026-08-05', name: '',
     fullSubs: [{ label: '기한 만료', text: '테스트 재화' }] }]);
+});
+
+test('student lists collect limited, fest and distributed students by first appearance', () => {
+  const GrowthPage = require('../js/growth.js');
+  const csv = scheduleCsv([
+    '2026-01-06,2026-01-20,14,,,,이벤트,옛 이벤트,신규,하루카(새해),,',
+    '2026-08-12,2026-08-26,14,,,,이벤트,옛 이벤트,복각,하루카(새해),,',
+    '2026-02-03,2026-02-17,14,,,,픽업,무츠키(새해),아루(새해),신규,한정,',
+    '2026-09-01,2026-09-15,14,,,,픽업,아루(새해),,복각,한정,',
+    '2026-03-03,2026-03-17,14,,,,픽업,와카모,,신규,페스,',
+    '2026-03-03,2026-03-17,14,,,,픽업,세나,,신규,통상,'
+  ]);
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(SCHEMA_CSV));
+  const lists = Adapter.studentLists(Adapter.csvToRecords(csv), schema);
+  assert.deepEqual(lists, {
+    limited: [{ name: '무츠키(새해)', first: '2026-02-03' }, { name: '아루(새해)', first: '2026-02-03' }],
+    fes: [{ name: '와카모', first: '2026-03-03' }],
+    welfare: [{ name: '하루카(새해)', first: '2026-01-06' }]
+  });
+  const html = GrowthPage.certHtml(lists);
+  assert.deepEqual([...html.matchAll(/class="st-name">([^<]+)/g)].map((m) => m[1]),
+    ['와카모', '무츠키(새해)', '아루(새해)', '하루카(새해)']);
+  assert.match(html, /<li class="st-row st-fes"><span class="st-tag">페스<\/span><span class="st-name">와카모<\/span><span class="st-extra"><\/span><\/li>/);
+});
+
+test('shop rows become a text line labeled with the shop name', () => {
+  const schema = SCHEMA_CSV + '\n상점,대상 상점,캐릭터 목록,,,';
+  const csv = scheduleCsv(['2026-08-01,,,,,,상점,숙련 증서,오토기, 아이리(밴드),,']);
+  const events = convert(csv.replace('오토기, 아이리(밴드)', '"오토기, 아이리(밴드)"'), schema);
+  assert.deepEqual(events[0].fullSubs, [{ label: '숙련 증서 상점', text: '오토기, 아이리(밴드)' }]);
 });
