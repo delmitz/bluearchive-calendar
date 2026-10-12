@@ -57,12 +57,15 @@ body{margin:0}
 /* Tag + title: a long title starts right after the tag and wraps in place. */
 .title-row{display:flex;align-items:flex-start;gap:8px}
 .title-row .title{min-width:0}
+.title-ep{font-size:13px;font-weight:500;color:var(--ink-soft);opacity:.8;white-space:nowrap}
 .card.m-card{display:flex;flex-direction:column;margin-left:16px;border-radius:14px;overflow:hidden;box-sizing:border-box}
 .card-head{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px 18px 10px}
 .card-date{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 .pickups{align-self:flex-start;max-width:100%;display:flex;align-items:flex-start;gap:10px}
 .pickup-list{min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:2px}
 .pickup-name{font-size:15px;font-weight:500;line-height:1.4}
+.pickup-list .row-wrap{flex-wrap:nowrap;align-items:baseline}
+.pickup-list .pickup-name{min-width:0}
 .pk-new-name{font-weight:700}
 .pk-new-normal{color:var(--accent-strong)}
 .pk-new-limited{color:var(--pk-limited)}
@@ -88,6 +91,8 @@ body{margin:0}
 .span-frame::before{content:"";position:absolute;top:0;left:0;width:14px;height:14px;border-top:1.5px solid var(--story);border-left:1.5px solid var(--story);border-top-left-radius:14px}
 .span-frame::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;background-repeat:no-repeat;background-image:linear-gradient(to right,var(--story) 0%,var(--story) 62%,transparent 85%),linear-gradient(to bottom,var(--story) 0%,var(--story) calc(100% - 16px),transparent 100%);background-position:14px 0,0 14px;background-size:calc(100% - 14px) 1.5px,1.5px calc(100% - 14px)}
 .story-tail{display:flex;flex-direction:column;gap:6px;padding:4px 4px 2px 14px;margin-bottom:18px}
+/* Keep text clear of the detached raid end line running up on the right. */
+.story-tail-raid{padding-right:28px}
 .story-tail-date{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
 /* A raid end line after a story block reaches up to the card it ends with. */
 .raid-detached::before{top:calc(-1 * var(--reach, 7px));bottom:50%;background:linear-gradient(to bottom,transparent 0%,var(--raid) 30%,var(--raid) 100%)}

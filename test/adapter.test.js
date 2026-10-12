@@ -268,3 +268,12 @@ test('rate campaigns share one line per rate, full-length items first, experienc
     { label: '2배', text: '경험치 [금~토]' }
   ]);
 });
+
+test('main story episodes are shown next to the title', () => {
+  const schema = SCHEMA_CSV.replace('메인스토리,제목,,,,', '메인스토리,제목,화수,,,');
+  const csv = scheduleCsv(['2026-08-05,,,,,,메인스토리,1장,1-17,,,']);
+  const events = convert(csv, schema);
+  assert.equal(events[0].episodes, '1-17');
+  const html = Timeline.rowsHtml(Timeline.buildRows(events, null).rows);
+  assert.match(html, /1장 <span class="title-ep">1-17화<\/span>/);
+});

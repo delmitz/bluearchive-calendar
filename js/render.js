@@ -128,7 +128,8 @@
 
       if (e.type === 'story' || !e.end) {
         item.isStory = true;
-        item.titles = item.name ? [{ typeLabel: item.typeLabel, name: item.name, nameCls: item.nameCls }] : [];
+        item.titles = item.name ? [{ typeLabel: item.typeLabel, name: item.name, nameCls: item.nameCls,
+          episodes: e.episodes || '' }] : [];
         day.items.push(item);
         return;
       }
@@ -302,7 +303,8 @@
     return '<li class="span-story" data-week="' + item.midStories[0].week +
       '" data-frac="' + item.midStories[0].frac.toFixed(4) + '">' +
       '<span class="span-frame" aria-hidden="true"></span>' + card +
-      '<div class="story-tail">' + item.midStories.map(function (ms) {
+      '<div class="story-tail' + (item.raidEnds.length ? ' story-tail-raid' : '') + '">' +
+      item.midStories.map(function (ms) {
         return '<p class="story-tail-date">' + esc(ms.label) + '</p>' +
           ms.items.map(storyBody).join('');
       }).join('') + '</div>' +
@@ -315,7 +317,8 @@
     return item.titles.map(function (t) {
       return '<div class="title-row">' +
         '<span class="tag tag-story">' + esc(t.typeLabel) + '</span>' +
-        '<span class="title ' + t.nameCls + '">' + esc(t.name) + '</span></div>';
+        '<span class="title ' + t.nameCls + '">' + esc(t.name) +
+        (t.episodes ? ' <span class="title-ep">' + esc(t.episodes) + '화</span>' : '') + '</span></div>';
     }).join('') + subsHtml(item.fullSubs);
   }
 

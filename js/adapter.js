@@ -174,7 +174,9 @@
         var kind = EVENT_KIND[r.get('신규/복각')] || 'new';
         newCard(kind, r.start, r.end, r.get('제목'));
       } else if (r.type === '메인스토리') {
-        out.push({ type: 'story', start: r.start, name: r.get('제목') });
+        var ep = r.get('화수');
+        out.push(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
+          : { type: 'story', start: r.start, name: r.get('제목') });
       } else if (r.type === '제약해제결전') {
         if (!r.end) return;
         // Raids open the day before the date written in the sheet.
