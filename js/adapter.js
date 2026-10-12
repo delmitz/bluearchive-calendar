@@ -340,11 +340,43 @@
     }
   }
 
+  // Event history for the events page: one entry per event title with the
+  // KR start of its first run (신규), reruns (복각) and permanent release
+  // (상설), newest first-run first. Titles without a first-run row sort by
+  // their earliest date.
+  function eventHistory(records, schema) {
+    var map = schema['이벤트'];
+    if (!map) return [];
+    var titleCol = column(map, '제목'), kindCol = column(map, '신규/복각');
+    if (!titleCol || !kindCol) return [];
+    var byName = {};
+    var list = [];
+    records.forEach(function (rec) {
+      if (rec[COL.type] !== '이벤트') return;
+      var name = rec[titleCol], start = normDay(rec[COL.start]);
+      if (!name || !start) return;
+      var e = byName[name];
+      if (!e) { e = byName[name] = { name: name, first: '', reruns: [], permanent: '' }; list.push(e); }
+      var kind = rec[kindCol];
+      if (kind === '복각') e.reruns.push(start);
+      else if (kind === '상설') { if (!e.permanent || start < e.permanent) e.permanent = start; }
+      else if (!e.first || start < e.first) e.first = start;
+    });
+    list.forEach(function (e) {
+      e.reruns.sort();
+      e._key = e.first || [e.reruns[0], e.permanent].filter(Boolean).sort()[0] || '';
+    });
+    list.sort(function (a, b) { return a._key < b._key ? 1 : a._key > b._key ? -1 : 0; });
+    list.forEach(function (e) { delete e._key; });
+    return list;
+  }
+
   var api = {
     parseCSV: parseCSV,
     csvToRecords: csvToRecords,
     buildSchema: buildSchema,
-    sheetRowsToEvents: sheetRowsToEvents
+    sheetRowsToEvents: sheetRowsToEvents,
+    eventHistory: eventHistory
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Adapter = api;

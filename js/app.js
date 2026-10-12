@@ -18,6 +18,8 @@
   var loadMoreEl = document.getElementById('load-more');
   var loadMoreButton = document.getElementById('load-more-button');
 
+  var eventsPageEl = document.getElementById('events-page');
+
   var events = [];
   var fromT = null;
 
@@ -82,7 +84,9 @@
     loadMoreEl.hidden = true;
     Promise.all([fetchText(SCHEDULE_GID), fetchText(SCHEMA_GID)]).then(function (texts) {
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
-      events = Adapter.sheetRowsToEvents(Adapter.csvToRecords(texts[0]), schema, {
+      var records = Adapter.csvToRecords(texts[0]);
+      eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
+      events = Adapter.sheetRowsToEvents(records, schema, {
         warn: function (msg) { console.warn('[timeline] ' + msg); }
       });
       fromT = initialFrom(events, todayT());
@@ -90,6 +94,7 @@
     }).catch(function (err) {
       console.error(err);
       timelineEl.innerHTML = '';
+      eventsPageEl.innerHTML = '<p class="page-empty">이벤트를 불러오지 못했습니다.</p>';
       setStatus('일정을 불러오지 못했습니다.', true);
     });
   }
@@ -100,6 +105,10 @@
   });
 
   window.addEventListener('resize', function () { Timeline.layout(timelineEl); });
+  // Layout needs the page to be visible; redo it when the timeline tab opens.
+  window.addEventListener('route', function (e) {
+    if (e.detail === 'timeline') Timeline.layout(timelineEl);
+  });
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(function () { Timeline.layout(timelineEl); });
   }

@@ -277,3 +277,22 @@ test('main story episodes are shown next to the title', () => {
   const html = Timeline.rowsHtml(Timeline.buildRows(events, null).rows);
   assert.match(html, /1장 <span class="title-ep">1-17화<\/span>/);
 });
+
+test('event history lists first run, reruns and permanent dates, newest first', () => {
+  const EventsPage = require('../js/events.js');
+  const csv = scheduleCsv([
+    '2026-01-06,2026-01-20,14,,,,이벤트,옛 이벤트,신규,,,',
+    '2026-08-12,2026-08-26,14,,,,이벤트,옛 이벤트,복각,,,',
+    '2026-09-01,,,,,,이벤트,옛 이벤트,상설,,,',
+    '2026-05-05,2026-05-19,14,,,,이벤트,새 이벤트,신규,,,'
+  ]);
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(SCHEMA_CSV));
+  const list = Adapter.eventHistory(Adapter.csvToRecords(csv), schema);
+  assert.deepEqual(list, [
+    { name: '새 이벤트', first: '2026-05-05', reruns: [], permanent: '' },
+    { name: '옛 이벤트', first: '2026-01-06', reruns: ['2026-08-12'], permanent: '2026-09-01' }
+  ]);
+  const html = EventsPage.html(list);
+  assert.match(html, /<time class="ev-day" datetime="2026-08-12">26\.08\.12<\/time>/);
+  assert.match(html, /<td class="ev-date"><span class="ev-none">–<\/span><\/td>/);
+});

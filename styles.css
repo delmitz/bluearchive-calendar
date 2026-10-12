@@ -33,7 +33,25 @@ body{margin:0}
 
 /* Layout (inline styles of the design) */
 .app{min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Gothic A1','Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased}
-.m-page{max-width:720px;margin:0 auto;padding:32px 20px 48px;box-sizing:border-box}
+.m-page{max-width:720px;margin:0 auto;padding:24px 20px 48px;box-sizing:border-box}
+.m-page[hidden]{display:none}
+/* Top menu tabs (the tab row sticks to the top). */
+.site-tabs{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+.site-tabs-in{max-width:720px;margin:0 auto;padding:0 20px;box-sizing:border-box;display:flex;gap:22px;overflow-x:auto;scrollbar-width:none}
+.site-tabs-in::-webkit-scrollbar{display:none}
+.site-tabs a{flex:none;padding:16px 0 11px;border-bottom:3px solid transparent;font-size:15px;font-weight:700;color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+.site-tabs a:hover{color:var(--ink)}
+.site-tabs a[aria-current="page"]{color:var(--accent-strong);border-bottom-color:var(--accent)}
+.page-empty{margin:48px 0;text-align:center;font-size:14px;font-weight:600;color:var(--ink-soft)}
+/* Events page: title column wraps, date columns stay narrow. */
+.ev-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--card-line);border-radius:14px;overflow:hidden;font-size:14px}
+.ev-table th,.ev-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.ev-table tbody tr:last-child > *{border-bottom:none}
+.ev-table thead th{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--band);white-space:nowrap}
+.ev-name{font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
+.ev-date{width:1%;white-space:nowrap}
+.ev-day{display:block;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.45}
+.ev-none{color:var(--ink-soft);opacity:.5}
 .load-more{display:flex;justify-content:center;margin-bottom:20px}
 .load-more[hidden]{display:none}
 .load-more button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink-soft);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
@@ -101,3 +119,4 @@ body{margin:0}
 .status button{margin-top:12px;min-height:44px;padding:0 20px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
 
 @media (max-width:480px){.tag{font-size:11px}.pk{font-size:11.5px}.m-page{padding-left:16px!important;padding-right:16px!important}.m-card{margin-left:8px!important}.m-head{padding-left:14px!important;padding-right:14px!important}.m-week{margin-left:10px!important;padding-left:14px!important;padding-right:14px!important}}
+@media (max-width:480px){.site-tabs-in{padding-left:16px;padding-right:16px}.ev-table{font-size:13px}.ev-table th,.ev-table td{padding:9px 8px}.ev-day{font-size:12px}}
