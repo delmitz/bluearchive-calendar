@@ -272,7 +272,7 @@
 
   function subsHtml(list) {
     return list.map(function (s) {
-      return '<p class="sub">' + (s.label ? '<span class="sub-label">' + esc(s.label) + '</span>' : '') +
+      return '<p class="sub">' + (s.label ? '<span class="sub-label' + (s.label === '3배' ? ' sub-label-x3' : '') + '">' + esc(s.label) + '</span>' : '') +
         '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) + '</span></p>';
     }).join('');
   }
