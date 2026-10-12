@@ -50,6 +50,8 @@ body{margin:0}
 .ev-table thead th{font-size:12px;font-weight:700;color:var(--ink-soft);background:var(--band);white-space:nowrap}
 .ev-name{font-weight:600;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .ev-date{width:1%;white-space:nowrap}
+.ev-table .ev-date{text-align:center}
+.ev-table thead th{text-align:center}
 .ev-sub{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink-soft)}
 /* Narrow screens: each row is a grid so the subtitle runs under the date
    columns too instead of wrapping inside the narrow title column. */
