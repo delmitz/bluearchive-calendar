@@ -42,6 +42,7 @@
   var ARMOR_ORDER = ['light', 'heavy', 'special', 'elastic'];
   function battleItem(b) {
     var item = textItem(b.boss);
+    item.terrain = b.terrain || '';
     item.label = BATTLE_LABELS[b.type] || b.type;
     item.armorGroups = armorGroups(b.armor);
     return item;
@@ -105,6 +106,7 @@
       if (e.type === 'raid') {
         var raid = {
           name: e.name,
+          terrain: e.terrain || '',
           nameCls: isPlaceholder(e.name) ? 'ph' : '',
           armorGroups: armorGroups(e.armor),
           endT: parseDay(e.end),
@@ -120,6 +122,7 @@
       item.type = e.type;
       item.typeLabel = TYPE_LABELS[e.type] || e.type;
       item.name = e.name || '';
+      item.welfare = e.welfare || '';
       item.nameCls = isPlaceholder(item.name) ? 'ph' : '';
       item.fullSubs = (e.fullSubs || []).map(textItem);
       item.battles = (e.battles || []).map(battleItem);
@@ -240,6 +243,9 @@
     return esc(t.main) + (t.sub ? ' <span class="title-sub">~' + esc(t.sub) + '~</span>' : '');
   }
 
+  // Battle terrain right after the boss name: "비나(야외)".
+  function terrainHtml(terrain) { return terrain ? '(' + esc(terrain) + ')' : ''; }
+
   function armorsHtml(groups) {
     if (!groups.length) return '';
     return '<span class="armors">' + groups.map(function (g) {
@@ -254,7 +260,7 @@
   function raidHtml(r, tag, phase, extraCls) {
     return '<' + tag + ' class="m-card raid raid-' + phase + (extraCls ? ' ' + extraCls : '') + '">' +
       '<span class="tag tag-raid">제약해제결전</span>' +
-      '<span class="raid-name ' + r.nameCls + '">' + esc(r.name) + '</span>' +
+      '<span class="raid-name ' + r.nameCls + '">' + esc(r.name) + terrainHtml(r.terrain) + '</span>' +
       armorsHtml(r.armorGroups) +
       '<span class="raid-phase">' + (phase === 'start' ? '시작 (' + r.weeks + '주간)' : '종료 (' + md(r.endT) + ')') + '</span>' +
       '</' + tag + '>';
@@ -273,7 +279,7 @@
   function battlesHtml(list) {
     return list.map(function (b) {
       return '<div class="row-wrap"><span class="tag">' + esc(b.label) + '</span>' +
-        '<span class="battle-name ' + b.cls + '">' + esc(b.text) + '</span>' +
+        '<span class="battle-name ' + b.cls + '">' + esc(b.text) + terrainHtml(b.terrain) + '</span>' +
         armorsHtml(b.armorGroups) + '</div>';
     }).join('');
   }
@@ -305,6 +311,8 @@
       (item.type === 'gap' ? '' :
         '<div class="title-row"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
         (item.name ? '<span class="title ' + item.nameCls + '">' + cardTitleHtml(item.name) + '</span>' : '') + '</div>') +
+      (item.welfare ? '<div class="row-wrap"><span class="tag">배포</span>' +
+        '<span class="battle-name">' + esc(item.welfare) + '</span></div>' : '') +
       pickupsHtml(item) + battlesHtml(item.battles) + subsHtml(item.fullSubs) +
       '</div>' + weeks + '</' + tag + '>';
     if (!item.midStories.length) {

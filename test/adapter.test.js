@@ -59,13 +59,13 @@ test('converts the example rows from the binding prompt', () => {
         { name: '니야', kind: 'rerun', tier: 'normal' }
       ],
       weeks: [
-        { battles: [{ type: 'tactical', boss: '호위', armor: [] }],
+        { battles: [{ type: 'tactical', boss: '호위', terrain: '', armor: [] }],
           subs: [{ label: '2배', text: '경험치 [토~일]' }] },
-        { battles: [{ type: 'grand', boss: '비나', armor: [['light', 'heavy'], ['elastic']] }] }
+        { battles: [{ type: 'grand', boss: '비나', terrain: '야외전', armor: [['light', 'heavy'], ['elastic']] }] }
       ] },
     { type: 'story', start: '2026-08-19', name: '2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」',
       fullSubs: [{ label: '미니스토리', text: '「이부키 가출 사건」' }] },
-    { type: 'raid', start: '2026-07-29', end: '2026-08-25', name: '세트', armor: ['light'] }
+    { type: 'raid', start: '2026-07-29', end: '2026-08-25', name: '세트', terrain: '야외전', armor: ['light'] }
   ]);
 });
 
@@ -310,4 +310,24 @@ test('event card titles show the subtitle muted on the same line', () => {
   const csv = scheduleCsv(['2026-08-05,2026-08-19,14,,,,이벤트,팬데믹 해저드 ~기적의 팬케이크~,복각,,,']);
   const html = Timeline.rowsHtml(Timeline.buildRows(convert(csv), null).rows);
   assert.match(html, /팬데믹 해저드 <span class="title-sub">~기적의 팬케이크~<\/span>/);
+});
+
+test('event cards show the distributed student when the sheet names one', () => {
+  const csv = scheduleCsv([
+    '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,하루카(새해),,',
+    '2026-09-01,2026-09-15,14,,,,이벤트,없음,신규,,,'
+  ]);
+  const events = convert(csv);
+  assert.equal(events[0].welfare, '하루카(새해)');
+  assert.equal('welfare' in events[1], false);
+  const html = Timeline.rowsHtml(Timeline.buildRows(events, null).rows);
+  assert.match(html, /<span class="tag">배포<\/span><span class="battle-name">하루카\(새해\)<\/span>/);
+  assert.equal((html.match(/>배포</g) || []).length, 1);
+});
+
+test('battle and raid names carry their terrain in parentheses', () => {
+  const html = Timeline.rowsHtml(Timeline.buildRows(convert(EXAMPLE), null).rows);
+  assert.match(html, /<span class="battle-name ">비나\(야외전\)<\/span>/);
+  assert.match(html, /<span class="raid-name ">세트\(야외전\)<\/span>/);
+  assert.match(html, /<span class="battle-name ">호위<\/span>/);
 });

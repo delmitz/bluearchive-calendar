@@ -172,7 +172,9 @@
         if (r.get('신규/복각') === '상설') return;  // permanent: a text line (pass 3)
         if (!r.end) { warn('Event without an end date skipped: ' + r.get('제목')); return; }
         var kind = EVENT_KIND[r.get('신규/복각')] || 'new';
-        newCard(kind, r.start, r.end, r.get('제목'));
+        var card = newCard(kind, r.start, r.end, r.get('제목'));
+        // The one student given out by the event, when the sheet names one.
+        if (r.get('배포캐릭터')) card.welfare = r.get('배포캐릭터');
       } else if (r.type === '메인스토리') {
         var ep = r.get('화수');
         out.push(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
@@ -181,7 +183,7 @@
         if (!r.end) return;
         // Raids open the day before the date written in the sheet.
         out.push({ type: 'raid', start: iso(r.t - DAY_MS), end: inclusiveEnd(r.end),
-          name: r.get('보스'), armor: armorList(r.get('방어타입')) });
+          name: r.get('보스'), terrain: r.get('지형'), armor: armorList(r.get('방어타입')) });
       }
     });
 
@@ -223,11 +225,13 @@
         var names = [r.get('캐릭터1'), r.get('캐릭터2')].filter(Boolean);
         if (names.length) placeOrGap(r, 'pickups', { name: names.join(', '), kind: kind, tier: tier });
       } else if (r.type === '총력전') {
-        placeOrGap(r, 'battles', { type: 'total', boss: r.get('보스'), armor: armorList(r.get('방어타입')) });
+        placeOrGap(r, 'battles', { type: 'total', boss: r.get('보스'), terrain: r.get('지형'),
+          armor: armorList(r.get('방어타입')) });
       } else if (r.type === '종합전술시험') {
-        placeOrGap(r, 'battles', { type: 'tactical', boss: r.get('사격/돌파/방어/호위'), armor: [] });
+        placeOrGap(r, 'battles', { type: 'tactical', boss: r.get('사격/돌파/방어/호위'),
+          terrain: r.get('지형'), armor: [] });
       } else if (r.type === '대결전') {
-        placeOrGap(r, 'battles', { type: 'grand', boss: r.get('보스'),
+        placeOrGap(r, 'battles', { type: 'grand', boss: r.get('보스'), terrain: r.get('지형'),
           armor: [armorList(r.get('상위방어타입')), armorList(r.get('하위방어타입'))] });
       }
     });
