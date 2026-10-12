@@ -27,6 +27,8 @@
     '미니스토리': ['제목'],
     '그룹스토리': ['제목'],
     '가이드미션': ['제목'],
+    '총결산': ['형식'],
+    '기한 만료': ['내용'],
     '이벤트(상설)': ['이벤트명'],
     '업데이트': ['내용'],
     '애용품': ['캐릭터1']
@@ -340,6 +342,9 @@
       }
       case '업데이트': return line('업데이트', r.get('내용'));
       case '가이드미션': return line('가이드미션', r.get('제목'));
+      case '기한 만료': return line('기한 만료', r.get('내용'));
+      // Shown with the full in-game name; 형식 is the reward format.
+      case '총결산': return line('샬레 총결산 with 총학생회', r.get('형식'));
       default: return '';
     }
   }

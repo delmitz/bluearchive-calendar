@@ -332,3 +332,21 @@ test('battle and raid names carry their terrain in parentheses', () => {
   assert.match(html, /<span class="raid-name ">세트\(야외전\)<\/span>/);
   assert.match(html, /<span class="battle-name ">호위<\/span>/);
 });
+
+test('settlement rows become a sub line with the full name', () => {
+  const schema = SCHEMA_CSV + '\n총결산,형식,,,,';
+  const csv = scheduleCsv([
+    '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-12,2026-08-19,7,,,,총결산,보물찾기,,,,'
+  ]);
+  const card = convert(csv, schema)[0];
+  assert.deepEqual(card.weeks[1].subs, [{ label: '샬레 총결산 with 총학생회', text: '보물찾기' }]);
+});
+
+test('expiry rows without an end date become story text lines', () => {
+  const schema = SCHEMA_CSV + '\n기한 만료,내용,,,,';
+  const csv = scheduleCsv(['2026-08-05,,,,,,기한 만료,테스트 재화,,,,']);
+  const events = convert(csv, schema);
+  assert.deepEqual(events, [{ type: 'story', start: '2026-08-05', name: '',
+    fullSubs: [{ label: '기한 만료', text: '테스트 재화' }] }]);
+});
