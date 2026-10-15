@@ -186,11 +186,15 @@
         if (c.t < dy.t && dy.t <= c.endT && (!host || c.t >= host.t)) host = c;
       });
       if (!host) return true;
+      // Stories only start mid-card when the event runs past its first
+      // week, so the frame always branches off at the next week boundary
+      // (e.g. week 2) rather than inside the week the story starts in.
+      var week = Math.ceil((dy.t - host.t) / (7 * DAY_MS));
       host.midStories.push({
         label: dy.label,
-        week: Math.floor((dy.t - host.t) / (7 * DAY_MS)),
-        // Share of the card period elapsed when the story starts.
-        frac: (dy.t - host.t) / (host.endT - host.t + DAY_MS),
+        week: week,
+        // Share of the card period elapsed at that week boundary.
+        frac: Math.min(1, week * 7 * DAY_MS / (host.endT - host.t + DAY_MS)),
         items: dy.items
       });
       return false;
