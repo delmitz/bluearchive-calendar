@@ -417,15 +417,6 @@ test('cert progress shows the target stage and fills the bar up to it', () => {
   assert.match(html, /<span class="pg-state"><span class="pg-stars pg-stars-weapon" role="img" aria-label="전4">(<svg[^>]*><path[^>]*\/><\/svg>){4}<\/span><\/span>/);
 });
 
-test('cert seed names match the student list spelling', () => {
-  const seed = require('../js/cert-seed.js');
-  assert.ok(seed['시로코*테러']);
-  for (const [stage, held] of Object.values(seed)) {
-    assert.ok(['3성', '4성', '전1', '전2', '전3', '전4'].includes(stage));
-    assert.ok(Number.isInteger(held) && held >= 0);
-  }
-});
-
 test('shop rows become a text line labeled with the shop name', () => {
   const schema = SCHEMA_CSV + '\n상점,대상 상점,캐릭터 목록,,,';
   const csv = scheduleCsv(['2026-08-01,,,,,,상점,숙련 증서,오토기, 아이리(밴드),,']);

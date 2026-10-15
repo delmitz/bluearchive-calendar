@@ -150,12 +150,8 @@
         if (migrateNames(saved)) saveProgress(saved);
         return saved;
       }
-    } catch (e) { /* storage unavailable: fall back to the seed */ }
-    var seed = root.CertSeed || {};
-    var copy = {};
-    Object.keys(seed).forEach(function (n) { copy[n] = seed[n].slice(); });
-    migrateNames(copy);
-    return copy;
+    } catch (e) { /* storage unavailable: start empty */ }
+    return {};
   }
 
   function saveProgress(progress) {
