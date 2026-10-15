@@ -126,6 +126,9 @@ body{margin:0}
    then their progress (stars, count, bar). */
 .hd-presets tbody + tbody{border-top:2px solid var(--card-line)}
 .hd-presets tbody th{border-right:1px solid var(--line)}
+.hd-preset-no{display:block}
+.hd-preset-ap{display:block;margin-top:2px;font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap}
+.hd-presets .hd-preset-name{white-space:nowrap}
 .hd-presets .hd-preset-name,.hd-presets .hd-preset-cell{width:auto;text-align:left;padding-left:14px}
 .hd-presets .hd-preset-state{width:62%;padding-right:12px}
 .hd-preset-pg{display:flex;align-items:center;justify-content:flex-end;gap:10px}
@@ -133,7 +136,8 @@ body{margin:0}
 .hd-preset-pg .pg-edit{flex:none}
 /* Phones, preset edit: keep the student menu readable; the bar steps aside. */
 @media (max-width:480px){
-.hd-presets thead th:first-child,.hd-presets tbody th{width:44px;padding-left:4px;padding-right:4px;white-space:nowrap}
+.hd-presets thead th:first-child,.hd-presets tbody th{width:44px;padding-left:4px;padding-right:4px}
+.hd-presets thead th:first-child{white-space:nowrap}
 .hd-presets .hd-preset-cell{padding-left:6px;padding-right:4px}
 .hd-preset-select{min-width:96px}
 .hd-presets .hd-preset-state{padding-right:8px}

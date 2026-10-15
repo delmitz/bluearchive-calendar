@@ -510,8 +510,8 @@ test('hard preset table lists set students with progress; editing shows every sl
   const filled = ElephPage.hardPresetHtml([['유우카', '', '아리스'], ['없는학생', '', ''], ['', '네루', '']], false, { '유우카': ['3성', 50] });
   assert.match(filled, /<thead><tr><th scope="col">프리셋<\/th><th scope="col">학생<\/th><th scope="col">육성상태<\/th>/);
   assert.equal((filled.match(/<tbody>/g) || []).length, 2);
-  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="2">1<\/th><td class="hd-preset-name" data-name="유우카">유우카<\/td><td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-state"><span class="pg-stars pg-stars-star"[^]*?<span class="pg-held">50<\/span>/);
-  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="1">3<\/th><td class="hd-preset-name" data-name="네루">/);
+  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="2"><span class="hd-preset-no">1<\/span><span class="hd-preset-ap">240 AP<\/span><\/th><td class="hd-preset-name" data-name="유우카">유우카<\/td><td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-state"><span class="pg-stars pg-stars-star"[^]*?<span class="pg-held">50<\/span>/);
+  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="1"><span class="hd-preset-no">3<\/span><span class="hd-preset-ap">60 AP<\/span><\/th><td class="hd-preset-name" data-name="네루">/);
   assert.doesNotMatch(filled, /is-empty|없는학생/);
   const editing = ElephPage.hardPresetHtml([['유우카', '', '']], true);
   assert.equal((editing.match(/<tbody>/g) || []).length, 7);

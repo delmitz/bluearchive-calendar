@@ -609,6 +609,23 @@
     try { root.localStorage.setItem(HARD_PRESET_KEY, JSON.stringify(presets)); } catch (e) { /* ignore */ }
   }
 
+  // AP a preset spends: 60 for every area-table cell holding one of its
+  // students (each student counted once even if picked twice).
+  var HARD_AP_PER_STAGE = 60;
+  function presetAp(names) {
+    var picked = {};
+    names.forEach(function (n) { if (n) picked[n] = true; });
+    var cells = 0;
+    HARD_STAGES.forEach(function (area) {
+      area.forEach(function (n) { if (picked[n]) cells++; });
+    });
+    return cells * HARD_AP_PER_STAGE;
+  }
+
+  function presetApHtml(names) {
+    return '<span class="hd-preset-ap">' + presetAp(names) + ' AP</span>';
+  }
+
   // The progress cell next to a preset student: stars and count (or, while
   // editing, the stage menu and count box from the student's initial rating),
   // then the bar.
@@ -661,7 +678,8 @@
           var cell = editing ?
             '<td class="hd-preset-cell">' + menu(name, '프리셋 ' + (i + 1) + ' ' + (slot.k + 1) + '번') + '</td>' :
             '<td class="hd-preset-name" data-name="' + esc(name) + '">' + esc(name) + '</td>';
-          return '<tr>' + (j === 0 ? '<th scope="rowgroup" rowspan="' + slots.length + '">' + (i + 1) + '</th>' : '') + cell +
+          return '<tr>' + (j === 0 ? '<th scope="rowgroup" rowspan="' + slots.length + '">' +
+              '<span class="hd-preset-no">' + (i + 1) + '</span>' + presetApHtml(row) + '</th>' : '') + cell +
             '<td class="hd-preset-state">' + presetProgressHtml(name, progress, editing) + '</td></tr>';
         }).join('') + '</tbody>';
       }).join('') + '</table>');
@@ -988,6 +1006,9 @@
       var name = sel.value;
       if (target === sel) {
         tr.querySelector('.hd-preset-state').innerHTML = presetProgressHtml(name, presetDraft, true);
+        var group = tr.parentNode;
+        var names = Array.prototype.map.call(group.querySelectorAll('.hd-preset-select'), function (x) { return x.value; });
+        group.querySelector('.hd-preset-ap').outerHTML = presetApHtml(names);
         return;
       }
       if (!name || !target.closest('.pg-edit')) return;
