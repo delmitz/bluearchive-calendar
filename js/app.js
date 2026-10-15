@@ -20,6 +20,8 @@
 
   var eventsPageEl = document.getElementById('events-page');
   var expertPageEl = document.getElementById('expert-page');
+  // The 하드 table is fixed data, drawn without waiting for the sheet.
+  ElephPage.mountHard(document.getElementById('hard-page'));
 
   var events = [];
   var fromT = null;

@@ -452,3 +452,86 @@ test('expert edit mode swaps stars for stage and count controls', () => {
   assert.match(html, /aria-label="세나 보유 엘레프" value="" disabled>/);
   assert.match(ElephPage.expertHtml(data, '2026-10-15', {}), /data-act="image">이미지 저장<\/button><button type="button" data-act="edit">일괄 편집<\/button>/);
 });
+
+test('hard table lists three stage students for each of the 30 areas', () => {
+  const ElephPage = require('../js/eleph.js');
+  const html = ElephPage.hardHtml();
+  assert.equal((html.match(/<tr><th scope="row">/g) || []).length, 30);
+  assert.match(html, /<tr><th scope="row">1<\/th><td data-name="유우카">유우카<\/td><td data-name="스즈미">스즈미<\/td><td data-name="세리카">세리카<\/td><\/tr>/);
+  assert.match(html, /<tr><th scope="row">30<\/th><td data-name="피나">피나<\/td><td data-name="모미지">모미지<\/td><td data-name="체리노">체리노<\/td><\/tr>/);
+});
+
+test('hard progress bars all start at 1성', () => {
+  const ElephPage = require('../js/eleph.js');
+  const html = ElephPage.hardFormHtml({ '스즈미': ['2성', 40], '시로코': ['전1', 60] });
+  assert.match(html, /^<details class="st-fold hd-fold"><summary class="st-section">육성상태 입력 <span class="st-count">44<\/span>/);
+  const segs = (name) => {
+    const row = html.split('<li ').find((r) => r.includes('data-name="' + name + '"'));
+    return [...row.matchAll(/flex-grow:(\d+)"><span class="pg-fill" style="width:([0-9.]+)%/g)].map((m) => [+m[1], +m[2]]);
+  };
+  assert.deepEqual(segs('스즈미'), [[30, 100], [80, 50], [100, 0], [120, 0], [120, 0], [180, 0], [200, 0]]);
+  assert.deepEqual(segs('유우카').map((x) => x[0]), [30, 80, 100, 120, 120, 180, 200]);
+  assert.deepEqual(segs('시로코'), [[30, 100], [80, 100], [100, 100], [120, 100], [120, 50], [180, 0], [200, 0]]);
+  assert.match(ElephPage.hardFormHtml({}, true), /^<details class="st-fold hd-fold" open>/);
+  assert.match(html, /<\/summary><div class="pg-tools"><button type="button" data-act="edit">일괄 편집<\/button><\/div><ul/);
+  assert.doesNotMatch(html, /data-act="export"/);
+  const editing = ElephPage.hardFormHtml({ '스즈미': ['2성', 40] }, true, true);
+  assert.equal(editing.match(/data-act="edit-save"/g).length, 2);
+  assert.match(editing, /aria-label="스즈미 목표 단계"><option value="">–<\/option><option value="1성">1성<\/option><option value="2성" selected>/);
+  assert.match(editing, /aria-label="유우카 목표 단계"><option value="" selected>–<\/option><option value="2성">/);
+  const order = [...html.matchAll(/class="st-name">([^<]+)/g)].map((m) => m[1]);
+  assert.deepEqual(order.slice(0, 3), ['네루', '미사키', '사야(사복)']);
+  assert.equal(order[20], '마리');
+  assert.equal(order[order.length - 1], '하루카');
+  assert.match(html, /<span class="st-rarity" role="img" aria-label="초기 1성"><svg[^>]*><path[^>]*\/><\/svg>1<\/span><span class="st-name">스즈미<\/span>/);
+  assert.match(html, /aria-label="초기 2성"><svg[^>]*><path[^>]*\/><\/svg>2<\/span><span class="st-name">유우카</);
+});
+
+test('hard table greys fully grown students and hides fully grown areas', () => {
+  const ElephPage = require('../js/eleph.js');
+  const done = ['전4', 0];
+  const progress = { '유우카': done, '스즈미': done, '세리카': done, '코토리': done };
+  const html = ElephPage.hardHtml(progress);
+  assert.doesNotMatch(html, /<th scope="row">1<\/th>/);
+  assert.match(html, /<tr><th scope="row">2<\/th><td data-name="코토리" class="is-done">코토리<\/td><td data-name="아카리">/);
+  assert.match(html, /<td data-name="유우카" class="is-done">유우카<\/td>/);
+  assert.match(html, /<input type="checkbox" data-act="show-all"> 모두 보기<\/label>/);
+  const all = ElephPage.hardHtml(progress, true);
+  assert.match(all, /<tr><th scope="row">1<\/th><td data-name="유우카" class="is-done">/);
+  assert.match(all, /data-act="show-all" checked>/);
+  assert.equal((ElephPage.hardHtml().match(/<tr><th scope="row">/g) || []).length, 30);
+});
+
+test('hard preset table lists set students with progress; editing shows every slot', () => {
+  const ElephPage = require('../js/eleph.js');
+  const none = ElephPage.hardPresetHtml();
+  assert.match(none, /data-act="preset-edit">편집<\/button><\/div><p class="hd-preset-none">/);
+  assert.doesNotMatch(none, /<table/);
+  const filled = ElephPage.hardPresetHtml([['유우카', '', '아리스'], ['없는학생', '', ''], ['', '네루', '']], false, { '유우카': ['3성', 50] });
+  assert.match(filled, /<thead><tr><th scope="col">프리셋<\/th><th scope="col">학생<\/th><th scope="col">육성상태<\/th>/);
+  assert.equal((filled.match(/<tbody>/g) || []).length, 2);
+  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="2">1<\/th><td class="hd-preset-name" data-name="유우카">유우카<\/td><td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-state"><span class="pg-stars pg-stars-star"[^]*?<span class="pg-held">50<\/span>/);
+  assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="1">3<\/th><td class="hd-preset-name" data-name="네루">/);
+  assert.doesNotMatch(filled, /is-empty|없는학생/);
+  const editing = ElephPage.hardPresetHtml([['유우카', '', '']], true);
+  assert.equal((editing.match(/<tbody>/g) || []).length, 7);
+  assert.equal((editing.match(/rowspan="3"/g) || []).length, 7);
+  assert.equal((editing.match(/<select class="hd-preset-select"/g) || []).length, 21);
+  assert.match(editing, /aria-label="프리셋 1 1번"><option value="">–<\/option>[^]*?<option value="유우카" selected>/);
+  assert.match(editing, /data-act="preset-save">저장/);
+  const withProgress = ElephPage.hardPresetHtml([['스즈미', '', '']], true, { '스즈미': ['2성', 40] });
+  assert.match(withProgress, /<td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-edit"><select class="pg-stage-select" aria-label="스즈미 목표 단계"><option value="">–<\/option><option value="1성">1성<\/option><option value="2성" selected>/);
+  assert.match(withProgress, /aria-label="스즈미 보유 엘레프" value="40">/);
+});
+
+test('hard import reads progress with presets, or bare progress', () => {
+  const ElephPage = require('../js/eleph.js');
+  const both = ElephPage.parseHardImport('{"progress":{"스즈미":["2성",40]},"presets":[["유우카","","아리스"]]}');
+  assert.deepEqual(both.progress, { '스즈미': ['2성', 40] });
+  assert.equal(both.presets.length, 7);
+  assert.deepEqual(both.presets[0], ['유우카', '', '아리스']);
+  const bare = ElephPage.parseHardImport('{"스즈미":["2성",40]}');
+  assert.deepEqual(bare, { progress: { '스즈미': ['2성', 40] }, presets: null });
+  assert.equal(ElephPage.parseHardImport('nope'), null);
+  assert.equal(ElephPage.parseHardImport('{"progress":{},"presets":[]}'), null);
+});
