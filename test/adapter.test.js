@@ -386,13 +386,44 @@ test('cert students split into pending and shop-added students', () => {
   ]);
   const schema = Adapter.buildSchema(Adapter.csvToRecords(schemaCsv));
   const data = Adapter.certStudents(Adapter.csvToRecords(csv), schema);
-  assert.deepEqual(data.pending.map((s) => s.name), ['카요코(새해)']);
+  assert.deepEqual(data.pending.map((s) => s.name), ['카요코(새해)', '노노미']);
   assert.deepEqual(data.added.map((s) => s.name), ['무츠키(새해)', '와카모', '하루카(새해)', '아루(새해)']);
   const html = GrowthPage.certHtml(data, '2026-07-01');
-  assert.match(html, /<span class="st-name">무츠키\(새해\)<time class="st-date" datetime="2026-08-01">8월 추가<\/time><\/span>/);
-  assert.match(html, /<span class="st-name">와카모<\/span>/);
-  assert.match(html, /^<p class="st-section">추가예정<\/p><ul class="st-list"><li class="st-row st-limited">/);
-  assert.match(html, /<li class="st-row st-fes"><span class="st-name">와카모<\/span><span class="st-extra"><\/span><\/li>/);
+  assert.match(html, /<span class="st-name">무츠키\(새해\)<time class="st-date" datetime="2026-08-01">8월<\/time><\/span>/);
+  assert.match(html, /<details class="st-fold"><summary class="st-section">추가예정 <span class="st-count">2<\/span><\/summary><ul class="st-list"><li class="st-row st-limited" data-name="카요코\(새해\)">/);
+  assert.match(GrowthPage.certHtml(data, '2026-07-01', {}, true), /<details class="st-fold" open>/);
+  assert.match(html, /<\/details><p class="st-section">판매 목록 <span class="st-count">4<\/span><\/p><ul class="st-list">/);
+  assert.match(html, /<li class="st-row st-fes" data-name="와카모"><button type="button" class="st-main"><span class="st-name">와카모<\/span>/);
+});
+
+test('cert progress shows the target stage and fills the bar up to it', () => {
+  const GrowthPage = require('../js/growth.js');
+  const data = { pending: [], added: [
+    { name: '마리(아이돌)', kind: 'limited', first: '2025-01-01', shop: '2025-10-01' },
+    { name: '와카모', kind: 'fes', first: '2022-01-01', shop: '2022-11-08' },
+    { name: '세나', kind: 'welfare', first: '2022-01-01', shop: '2022-11-08' }
+  ] };
+  const html = GrowthPage.certHtml(data, '2026-10-15', { '마리(아이돌)': ['전2', 54], '와카모': ['전4', 0] });
+  const widths = (name) => {
+    const row = html.split('<li ').find((r) => r.includes('data-name="' + name + '"'));
+    return [...row.matchAll(/width:([0-9.]+)%/g)].map((m) => +m[1]);
+  };
+  assert.deepEqual(widths('마리(아이돌)'), [100, 100, 100, 30, 0]);
+  assert.deepEqual(widths('와카모'), [100, 100, 100, 100, 100]);
+  assert.deepEqual(widths('세나'), [0, 0, 0, 0, 0]);
+  assert.match(html, /<p class="st-section">성장 완료 <span class="st-count">1<\/span><\/p><ul class="st-list"><li class="st-row st-fes" data-name="와카모">[^]*<\/ul>$/);
+  assert.equal(html.split('성장 완료')[0].includes('data-name="와카모"'), false);
+  assert.match(html, /<span class="pg-state"><span class="pg-stars pg-stars-weapon" role="img" aria-label="전2">(<svg[^>]*><path[^>]*\/><\/svg>){2}<\/span><span class="pg-held">54<\/span><\/span>/);
+  assert.match(html, /<span class="pg-state"><span class="pg-stars pg-stars-weapon" role="img" aria-label="전4">(<svg[^>]*><path[^>]*\/><\/svg>){4}<\/span><\/span>/);
+});
+
+test('cert seed names match the student list spelling', () => {
+  const seed = require('../js/cert-seed.js');
+  assert.ok(seed['시로코*테러']);
+  for (const [stage, held] of Object.values(seed)) {
+    assert.ok(['3성', '4성', '전1', '전2', '전3', '전4'].includes(stage));
+    assert.ok(Number.isInteger(held) && held >= 0);
+  }
 });
 
 test('shop rows become a text line labeled with the shop name', () => {
@@ -400,4 +431,15 @@ test('shop rows become a text line labeled with the shop name', () => {
   const csv = scheduleCsv(['2026-08-01,,,,,,상점,숙련 증서,오토기, 아이리(밴드),,']);
   const events = convert(csv.replace('오토기, 아이리(밴드)', '"오토기, 아이리(밴드)"'), schema);
   assert.deepEqual(events[0].fullSubs, [{ label: '숙련 증서 상점', text: '오토기, 아이리(밴드)' }]);
+});
+
+test('cert progress under an old student name moves to the new name', () => {
+  const GrowthPage = require('../js/growth.js');
+  const moved = { '시로코＊테러': ['전4', 0], '노조미': ['전2', 11] };
+  assert.equal(GrowthPage.migrateNames(moved), true);
+  assert.deepEqual(moved, { '노조미': ['전2', 11], '시로코*테러': ['전4', 0] });
+  const both = { '시로코＊테러': ['전1', 5], '시로코*테러': ['전3', 9] };
+  GrowthPage.migrateNames(both);
+  assert.deepEqual(both, { '시로코*테러': ['전3', 9] });
+  assert.equal(GrowthPage.migrateNames({ '노조미': ['전2', 11] }), false);
 });

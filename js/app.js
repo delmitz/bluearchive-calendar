@@ -19,7 +19,7 @@
   var loadMoreButton = document.getElementById('load-more-button');
 
   var eventsPageEl = document.getElementById('events-page');
-  var certPageEl = document.getElementById('cert-page');
+  var certPageEl = document.getElementById('expert-page');
 
   var events = [];
   var fromT = null;
@@ -87,7 +87,7 @@
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
       var records = Adapter.csvToRecords(texts[0]);
       eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
-      certPageEl.innerHTML = GrowthPage.certHtml(Adapter.certStudents(records, schema),
+      GrowthPage.mount(certPageEl, Adapter.certStudents(records, schema),
         new Date(todayT()).toISOString().slice(0, 10));
       events = Adapter.sheetRowsToEvents(records, schema, {
         warn: function (msg) { console.warn('[timeline] ' + msg); }

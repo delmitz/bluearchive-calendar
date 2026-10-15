@@ -1,6 +1,6 @@
-// Top menu: shows the page named by the URL hash (#/timeline, #/growth,
+// Top menu: shows the page named by the URL hash (#/timeline, #/eleph,
 // #/events) and marks its tab. A second segment picks a sub page inside it
-// (#/growth/cert, #/growth/hard); without one the page's first sub page is
+// (#/eleph/expert, #/eleph/hard); without one the page's first sub page is
 // shown. Fires a "route" event on window with the page name so pages can
 // redo layout work that needs them to be visible.
 (function () {

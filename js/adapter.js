@@ -429,8 +429,14 @@
   var CERT_SHOP = '숙련 증서';
   // Collaboration students never sold in the shop are left off the page.
   var CERT_EXCLUDED = { '미코토': true, '쇼쿠호': true, '사텐 루이코': true, '하츠네 미쿠': true };
+  // Distributed students the sheet does not record as 배포캐릭터: 노노미 comes
+  // from the first guide mission (KR launch, 2021-11-09).
+  var CERT_EXTRA_WELFARE = [{ name: '노노미', first: '2021-11-09' }];
   function certStudents(records, schema) {
     var lists = studentLists(records, schema);
+    CERT_EXTRA_WELFARE.forEach(function (s) {
+      if (!lists.welfare.some(function (w) { return w.name === s.name; })) lists.welfare.push(s);
+    });
     var shopDay = {}, shopOrder = {}, seq = 0;
     var shop = schema['상점'];
     var targetCol = shop && column(shop, '대상 상점'), namesCol = shop && column(shop, '캐릭터 목록');
