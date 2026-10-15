@@ -513,6 +513,9 @@ test('hard preset table lists set students with progress; editing shows every sl
   assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="2"><span class="hd-preset-no">1<\/span><span class="hd-preset-ap">240 AP<\/span><\/th><td class="hd-preset-name" data-name="유우카">유우카<\/td><td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-state"><span class="pg-stars pg-stars-star"[^]*?<span class="pg-held">50<\/span>/);
   assert.match(filled, /<tbody><tr><th scope="rowgroup" rowspan="1"><span class="hd-preset-no">3<\/span><span class="hd-preset-ap">60 AP<\/span><\/th><td class="hd-preset-name" data-name="네루">/);
   assert.doesNotMatch(filled, /is-empty|없는학생/);
+  assert.doesNotMatch(none, /hd-preset-total/);
+  assert.match(filled, /<span class="hd-preset-total">전체 300 AP<\/span><button type="button" data-act="preset-edit">/);
+  assert.match(ElephPage.hardPresetHtml([['네루', '', ''], ['네루', '', '']]), /전체 60 AP/);
   const editing = ElephPage.hardPresetHtml([['유우카', '', '']], true);
   assert.equal((editing.match(/<tbody>/g) || []).length, 7);
   assert.equal((editing.match(/rowspan="3"/g) || []).length, 7);

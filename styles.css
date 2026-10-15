@@ -127,6 +127,8 @@ body{margin:0}
 .hd-presets tbody + tbody{border-top:2px solid var(--card-line)}
 .hd-presets tbody th{border-right:1px solid var(--line)}
 .hd-preset-no{display:block}
+.hd-preset-total{margin-right:auto;font-size:13px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+.hd-preset-tools .pg-tools-note{margin-right:10px}
 .hd-preset-ap{display:block;margin-top:2px;font-size:11px;font-weight:600;color:var(--ink-soft);white-space:nowrap}
 .hd-presets .hd-preset-name{white-space:nowrap}
 .hd-presets .hd-preset-name,.hd-presets .hd-preset-cell{width:auto;text-align:left;padding-left:14px}

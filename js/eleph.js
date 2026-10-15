@@ -626,6 +626,14 @@
     return '<span class="hd-preset-ap">' + presetAp(names) + ' AP</span>';
   }
 
+  // Total over every preset; a student picked in several presets is counted
+  // once, since their stages are run once.
+  function presetTotalHtml(presets) {
+    var names = [];
+    presets.forEach(function (row) { names = names.concat(row); });
+    return '<span class="hd-preset-total">전체 ' + presetAp(names) + ' AP</span>';
+  }
+
   // The progress cell next to a preset student: stars and count (or, while
   // editing, the stage menu and count box from the student's initial rating),
   // then the bar.
@@ -658,11 +666,12 @@
       return '<select class="hd-preset-select" aria-label="' + label + '"><option value="">–</option>' +
         groups.join('') + '</select>';
     }
+    var total = editing || presetCount(presets) ? presetTotalHtml(presets) : '';
     return '<div class="pg-tools hd-preset-tools">' + (editing ?
-        '<span class="pg-tools-note">프리셋 편집 중</span>' +
+        '<span class="pg-tools-note">프리셋 편집 중</span>' + total +
         '<button type="button" class="pg-primary" data-act="preset-save">저장</button>' +
         '<button type="button" data-act="preset-cancel">취소</button>' :
-        '<button type="button" data-act="preset-edit">편집</button>') + '</div>' +
+        total + '<button type="button" data-act="preset-edit">편집</button>') + '</div>' +
       // Outside editing, empty slots are left out (and presets with no
       // student at all); the edit view shows every slot.
       (!editing && !presetCount(presets) ?
@@ -1009,6 +1018,8 @@
         var group = tr.parentNode;
         var names = Array.prototype.map.call(group.querySelectorAll('.hd-preset-select'), function (x) { return x.value; });
         group.querySelector('.hd-preset-ap').outerHTML = presetApHtml(names);
+        var all = Array.prototype.map.call(el.querySelectorAll('.hd-preset-select'), function (x) { return x.value; });
+        el.querySelector('.hd-preset-total').outerHTML = presetTotalHtml([all]);
         return;
       }
       if (!name || !target.closest('.pg-edit')) return;
