@@ -230,10 +230,10 @@ test('permanent events (이벤트 + 상설) become story text lines', () => {
   assert.deepEqual(events[1].fullSubs, [{ label: '상설 이벤트', text: '빛으로 나아가는 그녀들의 소야곡' }]);
 });
 
-test('mid-card story blocks carry the elapsed share of the card period', () => {
+test('mid-card story blocks branch off at the middle of the card', () => {
   const view = Timeline.buildRows(convert(EXAMPLE), null);
   const card = view.rows.find((r) => r.isDay && r.start === '2026-08-12').items[0];
-  assert.equal(card.midStories[0].frac, 7 / 14);
+  assert.equal(card.midStories[0].frac, 0.5);
   assert.match(Timeline.rowsHtml(view.rows), /data-frac="0\.5000"/);
 });
 

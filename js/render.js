@@ -153,6 +153,15 @@
         week.isEmpty = !week.hasPickups && !week.subs.length && !week.battles.length;
         return week;
       });
+      // A one-week card needs no week zone: its content joins the card body.
+      if (len <= 7 && item.weeks.length === 1) {
+        var wk0 = e.weeks[0];
+        var merged = pickupGroup((e.pickups || []).concat(Array.isArray(wk0) ? [] : (wk0.pickups || [])));
+        Object.keys(merged).forEach(function (k) { item[k] = merged[k]; });
+        item.battles = item.battles.concat(item.weeks[0].battles);
+        item.fullSubs = item.fullSubs.concat(item.weeks[0].subs);
+        item.weeks = [];
+      }
       item.t = x.t;
       item.endT = parseDay(e.end);
       item.midStories = [];
@@ -186,15 +195,12 @@
         if (c.t < dy.t && dy.t <= c.endT && (!host || c.t >= host.t)) host = c;
       });
       if (!host) return true;
-      // Stories only start mid-card when the event runs past its first
-      // week, so the frame always branches off at the next week boundary
-      // (e.g. week 2) rather than inside the week the story starts in.
-      var week = Math.ceil((dy.t - host.t) / (7 * DAY_MS));
+      // The frame always branches off between week 1 and week 2, or at the
+      // middle of a card without week zones.
       host.midStories.push({
         label: dy.label,
-        week: week,
-        // Share of the card period elapsed at that week boundary.
-        frac: Math.min(1, week * 7 * DAY_MS / (host.endT - host.t + DAY_MS)),
+        week: 1,
+        frac: 0.5,
         items: dy.items
       });
       return false;
