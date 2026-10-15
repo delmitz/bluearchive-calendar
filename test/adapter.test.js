@@ -450,5 +450,5 @@ test('expert edit mode swaps stars for stage and count controls', () => {
   assert.match(html, /<option value="전2" selected>전2<\/option>/);
   assert.match(html, /aria-label="노조미 보유 엘레프" value="11">/);
   assert.match(html, /aria-label="세나 보유 엘레프" value="" disabled>/);
-  assert.match(ElephPage.expertHtml(data, '2026-10-15', {}), /data-act="edit">일괄 편집<\/button>/);
+  assert.match(ElephPage.expertHtml(data, '2026-10-15', {}), /data-act="image">이미지 저장<\/button><button type="button" data-act="edit">일괄 편집<\/button>/);
 });

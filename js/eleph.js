@@ -6,7 +6,8 @@
 // Each row shows the viewer's own progress (target stage and elephs held
 // toward it) as text and as a bar split by stage. Progress lives in this
 // browser only (localStorage). A row opens its own editor when tapped, and
-// 편집 switches every row to stage/count controls saved together; export shows
+// 일괄 편집 switches every row to stage/count controls saved together; 이미지
+// 저장 downloads the whole list as a PNG; export shows
 // the progress as one line of JSON to copy and import takes that JSON pasted
 // into a text box.
 (function (root) {
@@ -117,7 +118,8 @@
       '<div class="pg-tools is-editing"><span class="pg-tools-note">일괄 편집 중</span>' +
         '<button type="button" class="pg-primary" data-act="edit-save">저장</button>' +
         '<button type="button" data-act="edit-cancel">취소</button></div>' :
-      '<div class="pg-tools"><button type="button" data-act="edit">일괄 편집</button>' +
+      '<div class="pg-tools"><button type="button" data-act="image">이미지 저장</button>' +
+        '<button type="button" data-act="edit">일괄 편집</button>' +
         '<button type="button" data-act="export">내보내기</button>' +
         '<button type="button" data-act="import">가져오기</button></div>') +
       '<div class="pg-export pg-panel" hidden><textarea rows="4" readonly spellcheck="false" ' +
@@ -342,13 +344,89 @@
       row.querySelector('.pg-bar').outerHTML = barHtml(p);
     }
 
+    // Image export: the whole list (추가예정 unfolded) as a PNG, drawn by the
+    // html-to-image library, loaded on first use.
+    var IMAGE_LIB = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
+    var MAX_PIXELS = 16e6; // stays under mobile Safari's canvas size limit
+    var libLoading = null;
+
+    function loadImageLib() {
+      if (root.htmlToImage) return Promise.resolve(root.htmlToImage);
+      if (!libLoading) {
+        libLoading = new Promise(function (resolve, reject) {
+          var sc = document.createElement('script');
+          sc.src = IMAGE_LIB;
+          sc.onload = function () { resolve(root.htmlToImage); };
+          sc.onerror = function () { libLoading = null; reject(new Error('image library failed to load')); };
+          document.head.appendChild(sc);
+        });
+      }
+      return libLoading;
+    }
+
+    function saveImage(btn) {
+      var label = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '만드는 중…';
+      hidePanels();
+      closeEditor();
+      var fold = el.querySelector('.st-fold');
+      var wasOpen = fold && fold.open;
+      if (fold) fold.open = true;
+      fitNames();
+      function restore() {
+        if (fold) fold.open = wasOpen;
+        fitNames();
+        btn.disabled = false;
+        btn.textContent = label;
+      }
+      loadImageLib().then(function (lib) {
+        var w = el.scrollWidth, h = el.scrollHeight;
+        var ratio = Math.min(2, Math.sqrt(MAX_PIXELS / (w * h)));
+        return lib.toBlob(el, {
+          pixelRatio: ratio,
+          backgroundColor: getComputedStyle(el.closest('.app') || document.body).backgroundColor,
+          // Toolbar and panels are controls, not content.
+          filter: function (node) {
+            return !(node.classList && (node.classList.contains('pg-tools') || node.classList.contains('pg-panel')));
+          }
+        });
+      }).then(function (blob) {
+        restore();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'expert-' + today.replace(/-/g, '') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      }).catch(function (e) {
+        restore();
+        console.error(e);
+        btn.textContent = '이미지 실패';
+        setTimeout(function () { btn.textContent = label; }, 2500);
+      });
+    }
+
+    // Puts the import box back to its first step (no pending overwrite).
+    function resetImport() {
+      var box = el.querySelector('.pg-import');
+      var apply = box.querySelector('[data-act="import-apply"]');
+      apply.classList.remove('is-armed');
+      apply.textContent = '불러오기';
+      var msg = box.querySelector('.pg-import-msg');
+      msg.className = 'pg-import-msg pg-error';
+      msg.textContent = '';
+    }
+
     function hidePanels() {
       Array.prototype.forEach.call(el.querySelectorAll('.pg-panel'), function (b) { b.hidden = true; });
     }
 
     // Import: paste exported JSON into the text box; it replaces all saved
     // progress once it parses.
-    function onToolClick(name) {
+    function onToolClick(name, btn) {
+      if (name === 'image') { saveImage(btn); return; }
       if (name === 'edit') { hidePanels(); closeEditor(); editing = true; render(); return; }
       if (name === 'edit-cancel') { editing = false; render(); return; }
       if (name === 'edit-save') { saveEdits(); editing = false; render(); return; }
@@ -361,21 +439,31 @@
       if (name === 'import') {
         el.querySelector('.pg-export').hidden = true;
         box.hidden = !box.hidden;
-        msg.textContent = '';
+        resetImport();
         if (!box.hidden) area.focus();
         return;
       }
-      if (name === 'import-cancel') { box.hidden = true; area.value = ''; msg.textContent = ''; return; }
+      if (name === 'import-cancel') { box.hidden = true; area.value = ''; resetImport(); return; }
       if (name !== 'import-apply') return;
       var parsed;
       try { parsed = JSON.parse(area.value); } catch (e) { parsed = null; }
       var next = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? cleanProgress(parsed) : null;
       if (!next || !Object.keys(next).length) {
+        resetImport();
         msg.textContent = '불러올 수 없는 내용입니다. 내보내기로 받은 JSON을 그대로 붙여넣어 주세요.';
         return;
       }
-      if (Object.keys(progress).length &&
-          !root.confirm('저장된 진행 상황을 붙여넣은 내용으로 바꿉니다. 계속할까요?')) return;
+      // Replacing saved progress takes a second press (an in-page step, since
+      // some browsers and embedded views suppress confirm() and return false).
+      var apply = box.querySelector('[data-act="import-apply"]');
+      if (Object.keys(progress).length && !apply.classList.contains('is-armed')) {
+        apply.classList.add('is-armed');
+        apply.textContent = '덮어쓰기';
+        msg.className = 'pg-import-msg pg-note';
+        msg.textContent = '저장된 진행 상황 ' + Object.keys(progress).length + '명을 붙여넣은 ' +
+          Object.keys(next).length + '명으로 바꿉니다. 「덮어쓰기」를 한 번 더 누르면 적용됩니다.';
+        return;
+      }
       progress = next;
       saveProgress(progress);
       render();
@@ -386,7 +474,7 @@
       var editor = t.closest('.pg-editor');
       if (editor) { onEditorClick(editor, t); return; }
       var act = t.closest('.pg-tools [data-act], .pg-panel [data-act]');
-      if (act) { onToolClick(act.getAttribute('data-act')); return; }
+      if (act) { onToolClick(act.getAttribute('data-act'), act); return; }
       var main = t.closest('.st-main');
       if (!main || editing) return;
       var row = main.parentNode;
@@ -398,6 +486,7 @@
     };
 
     el.oninput = function (ev) {
+      if (ev.target.closest('.pg-import')) { resetImport(); return; }
       var row = editing && ev.target.closest('.st-row');
       if (row && ev.target.closest('.pg-edit')) onEditInput(row);
     };
