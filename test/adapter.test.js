@@ -368,10 +368,31 @@ test('student lists collect limited, fest and distributed students by first appe
     fes: [{ name: '와카모', first: '2026-03-03' }],
     welfare: [{ name: '하루카(새해)', first: '2026-01-06' }]
   });
-  const html = GrowthPage.certHtml(lists);
-  assert.deepEqual([...html.matchAll(/class="st-name">([^<]+)/g)].map((m) => m[1]),
-    ['와카모', '무츠키(새해)', '아루(새해)', '하루카(새해)']);
-  assert.match(html, /<li class="st-row st-fes"><span class="st-tag">페스<\/span><span class="st-name">와카모<\/span><span class="st-extra"><\/span><\/li>/);
+});
+
+test('cert students split into pending and shop-added students', () => {
+  const GrowthPage = require('../js/growth.js');
+  const schemaCsv = SCHEMA_CSV + '\n상점,대상 상점,캐릭터 목록,,,';
+  const csv = scheduleCsv([
+    '2026-01-06,2026-01-20,14,,,,이벤트,옛 이벤트,신규,하루카(새해),,',
+    '2026-02-03,2026-02-17,14,,,,픽업,무츠키(새해),아루(새해),신규,한정,',
+    '2026-03-03,2026-03-17,14,,,,픽업,와카모,,신규,페스,',
+    '2026-04-07,2026-04-21,14,,,,픽업,세나,,신규,통상,',
+    '2026-05-05,2026-05-19,14,,,,픽업,카요코(새해),,신규,한정,',
+    '2026-05-05,2026-05-19,14,,,,픽업,미코토,쇼쿠호,신규,한정,',
+    '2026-06-01,,,,,,상점,숙련 증서,"와카모, 하루카(새해), 아루(새해)",,',
+    '2026-08-01,,,,,,상점,숙련 증서,무츠키(새해),,',
+    '2026-08-01,,,,,,상점,현상수배,세나,,'
+  ]);
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(schemaCsv));
+  const data = Adapter.certStudents(Adapter.csvToRecords(csv), schema);
+  assert.deepEqual(data.pending.map((s) => s.name), ['카요코(새해)']);
+  assert.deepEqual(data.added.map((s) => s.name), ['무츠키(새해)', '와카모', '하루카(새해)', '아루(새해)']);
+  const html = GrowthPage.certHtml(data, '2026-07-01');
+  assert.match(html, /<span class="st-name">무츠키\(새해\)<time class="st-date" datetime="2026-08-01">8월 추가<\/time><\/span>/);
+  assert.match(html, /<span class="st-name">와카모<\/span>/);
+  assert.match(html, /^<p class="st-section">추가예정<\/p><ul class="st-list"><li class="st-row st-limited">/);
+  assert.match(html, /<li class="st-row st-fes"><span class="st-name">와카모<\/span><span class="st-extra"><\/span><\/li>/);
 });
 
 test('shop rows become a text line labeled with the shop name', () => {

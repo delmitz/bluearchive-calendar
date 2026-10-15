@@ -87,7 +87,8 @@
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
       var records = Adapter.csvToRecords(texts[0]);
       eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
-      certPageEl.innerHTML = GrowthPage.certHtml(Adapter.studentLists(records, schema));
+      certPageEl.innerHTML = GrowthPage.certHtml(Adapter.certStudents(records, schema),
+        new Date(todayT()).toISOString().slice(0, 10));
       events = Adapter.sheetRowsToEvents(records, schema, {
         warn: function (msg) { console.warn('[timeline] ' + msg); }
       });

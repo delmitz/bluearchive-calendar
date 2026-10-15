@@ -421,13 +421,57 @@
     return { limited: sorted(lists.limited), fes: sorted(lists.fes), welfare: sorted(lists.welfare) };
   }
 
+  // Skill certificate page: the studentLists() students split by whether the
+  // 숙련 증서 shop sells them yet (상점 rows, 대상 상점 "숙련 증서").
+  // pending: not in the shop yet, newest first appearance first.
+  // added: newest shop addition first, keeping the sheet order of names
+  // within the same date. Each entry: { name, kind, first, shop }.
+  var CERT_SHOP = '숙련 증서';
+  // Collaboration students never sold in the shop are left off the page.
+  var CERT_EXCLUDED = { '미코토': true, '쇼쿠호': true, '사텐 루이코': true, '하츠네 미쿠': true };
+  function certStudents(records, schema) {
+    var lists = studentLists(records, schema);
+    var shopDay = {}, shopOrder = {}, seq = 0;
+    var shop = schema['상점'];
+    var targetCol = shop && column(shop, '대상 상점'), namesCol = shop && column(shop, '캐릭터 목록');
+    if (targetCol && namesCol) {
+      records.forEach(function (rec) {
+        if (rec[COL.type] !== '상점' || rec[targetCol] !== CERT_SHOP) return;
+        var day = normDay(rec[COL.start]);
+        if (!day) return;
+        (rec[namesCol] || '').split(',').forEach(function (n) {
+          n = n.trim();
+          if (!n || (shopDay[n] && shopDay[n] <= day)) return;
+          shopDay[n] = day;
+          shopOrder[n] = seq++;
+        });
+      });
+    }
+    var pending = [], added = [];
+    ['fes', 'welfare', 'limited'].forEach(function (kind) {
+      lists[kind].forEach(function (s) {
+        if (CERT_EXCLUDED[s.name]) return;
+        var entry = { name: s.name, kind: kind, first: s.first, shop: shopDay[s.name] || '' };
+        (entry.shop ? added : pending).push(entry);
+      });
+    });
+    pending.sort(function (a, b) {
+      return a.first < b.first ? 1 : a.first > b.first ? -1 : (a.name < b.name ? -1 : 1);
+    });
+    added.sort(function (a, b) {
+      return a.shop < b.shop ? 1 : a.shop > b.shop ? -1 : shopOrder[a.name] - shopOrder[b.name];
+    });
+    return { pending: pending, added: added };
+  }
+
   var api = {
     parseCSV: parseCSV,
     csvToRecords: csvToRecords,
     buildSchema: buildSchema,
     sheetRowsToEvents: sheetRowsToEvents,
     eventHistory: eventHistory,
-    studentLists: studentLists
+    studentLists: studentLists,
+    certStudents: certStudents
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Adapter = api;
