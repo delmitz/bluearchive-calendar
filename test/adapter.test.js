@@ -434,3 +434,21 @@ test('expert progress under an old student name moves to the new name', () => {
   assert.deepEqual(both, { '시로코*테러': ['전3', 9] });
   assert.equal(ElephPage.migrateNames({ '노조미': ['전2', 11] }), false);
 });
+
+test('expert edit mode swaps stars for stage and count controls', () => {
+  const ElephPage = require('../js/eleph.js');
+  const data = { pending: [], added: [
+    { name: '노조미', kind: 'limited', first: '2026-01-01', shop: '2026-04-01' },
+    { name: '세나', kind: 'welfare', first: '2022-01-01', shop: '2022-11-08' }
+  ] };
+  const html = ElephPage.expertHtml(data, '2026-10-15', { '노조미': ['전2', 11] }, false, true);
+  assert.match(html, /data-act="edit-save">저장<\/button><button type="button" data-act="edit-cancel">취소/);
+  assert.doesNotMatch(html, /data-act="edit">편집/);
+  assert.equal(html.match(/data-act="edit-save"/g).length, 2);
+  assert.match(html, /<div class="pg-tools pg-tools-end">[^]*data-act="edit-cancel">취소<\/button><\/div>$/);
+  assert.doesNotMatch(html, /<button type="button" class="st-main">/);
+  assert.match(html, /<option value="전2" selected>전2<\/option>/);
+  assert.match(html, /aria-label="노조미 보유 엘레프" value="11">/);
+  assert.match(html, /aria-label="세나 보유 엘레프" value="" disabled>/);
+  assert.match(ElephPage.expertHtml(data, '2026-10-15', {}), /data-act="edit">일괄 편집<\/button>/);
+});

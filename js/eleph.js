@@ -5,8 +5,10 @@
 // added in JP, KR date estimated).
 // Each row shows the viewer's own progress (target stage and elephs held
 // toward it) as text and as a bar split by stage. Progress lives in this
-// browser only (localStorage); export shows it as one line of JSON to copy
-// and import takes that JSON pasted into a text box.
+// browser only (localStorage). A row opens its own editor when tapped, and
+// 편집 switches every row to stage/count controls saved together; export shows
+// the progress as one line of JSON to copy and import takes that JSON pasted
+// into a text box.
 (function (root) {
   'use strict';
 
@@ -63,20 +65,35 @@
     }).join('') + '</span>';
   }
 
-  function rowHtml(s, today, progress) {
-    var upcoming = s.shop && today && s.shop > today;
-    var p = progress[s.name];
-    return '<li class="st-row ' + KINDS[s.kind] + '" data-name="' + esc(s.name) + '">' +
-      '<button type="button" class="st-main">' +
-      '<span class="st-name">' + esc(s.name) +
-      (upcoming ? '<time class="st-date" datetime="' + s.shop + '">' + addedText(s.shop) + '</time>' : '') +
-      '</span><span class="st-extra"><span class="pg-state">' + stateText(p) + '</span>' +
-      barHtml(p) + '</span></button></li>';
+  // Edit mode controls in place of the stars and count: a stage menu
+  // ("–" clears) and the elephs held (off for 전4 and "–").
+  function editHtml(name, p) {
+    var cur = p ? p[0] : '';
+    var off = !p || p[0] === DONE;
+    return '<span class="pg-edit"><select class="pg-stage-select" aria-label="' + esc(name) + ' 목표 단계">' +
+      '<option value=""' + (cur ? '' : ' selected') + '>–</option>' + STAGE_KEYS.map(function (k) {
+        return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + k + '</option>';
+      }).join('') + '</select><input class="pg-held-edit" type="number" min="0" max="999" inputmode="numeric" ' +
+      'aria-label="' + esc(name) + ' 보유 엘레프" value="' + (off ? '' : p[1]) + '"' + (off ? ' disabled' : '') + '></span>';
   }
 
-  function listHtml(students, today, progress) {
+  function rowHtml(s, today, progress, editing) {
+    var upcoming = s.shop && today && s.shop > today;
+    var p = progress[s.name];
+    // In edit mode the row is not a button (it holds form controls).
+    var tag = editing ? 'div' : 'button';
+    return '<li class="st-row ' + KINDS[s.kind] + '" data-name="' + esc(s.name) + '">' +
+      '<' + tag + (editing ? '' : ' type="button"') + ' class="st-main">' +
+      '<span class="st-name">' + esc(s.name) +
+      (upcoming ? '<time class="st-date" datetime="' + s.shop + '">' + addedText(s.shop) + '</time>' : '') +
+      '</span><span class="st-extra">' +
+      (editing ? editHtml(s.name, p) : '<span class="pg-state">' + stateText(p) + '</span>') +
+      barHtml(p) + '</span></' + tag + '></li>';
+  }
+
+  function listHtml(students, today, progress, editing) {
     return '<ul class="st-list">' + students.map(function (s) {
-      return rowHtml(s, today, progress);
+      return rowHtml(s, today, progress, editing);
     }).join('') + '</ul>';
   }
 
@@ -86,7 +103,8 @@
 
   // data: Adapter.expertStudents() output. today: "YYYY-MM-DD".
   // progress: { name: [stage, held] }. pendingOpen: show 추가예정 unfolded.
-  function expertHtml(data, today, progress, pendingOpen) {
+  // editing: every row shows stage and count controls, saved all at once.
+  function expertHtml(data, today, progress, pendingOpen, editing) {
     progress = progress || {};
     if (!data.pending.length && !data.added.length) return '<p class="page-empty">표시할 학생이 없습니다.</p>';
     // Fully grown students (전4) are gathered in a last list, in page order.
@@ -94,8 +112,14 @@
     function notDone(s) { return !isDone(s); }
     var pending = data.pending.filter(notDone), added = data.added.filter(notDone);
     var done = data.pending.concat(data.added).filter(isDone);
-    return '<div class="pg-tools"><button type="button" data-act="export">내보내기</button>' +
-      '<button type="button" data-act="import">가져오기</button></div>' +
+    function list(students) { return listHtml(students, today, progress, editing); }
+    return (editing ?
+      '<div class="pg-tools is-editing"><span class="pg-tools-note">일괄 편집 중</span>' +
+        '<button type="button" class="pg-primary" data-act="edit-save">저장</button>' +
+        '<button type="button" data-act="edit-cancel">취소</button></div>' :
+      '<div class="pg-tools"><button type="button" data-act="edit">일괄 편집</button>' +
+        '<button type="button" data-act="export">내보내기</button>' +
+        '<button type="button" data-act="import">가져오기</button></div>') +
       '<div class="pg-export pg-panel" hidden><textarea rows="4" readonly spellcheck="false" ' +
       'aria-label="내보낼 JSON"></textarea><p class="pg-export-msg pg-note" role="status"></p>' +
       '<div class="pg-panel-acts"><button type="button" data-act="export-copy">복사</button>' +
@@ -108,9 +132,13 @@
       // Upcoming students fold away (closed unless pendingOpen).
       (pending.length ? '<details class="st-fold"' + (pendingOpen ? ' open' : '') + '>' +
         '<summary class="st-section">추가예정 <span class="st-count">' + pending.length + '</span></summary>' +
-        listHtml(pending, today, progress) + '</details>' : '') +
-      (added.length ? sectionHtml('판매 목록', added.length) + listHtml(added, today, progress) : '') +
-      (done.length ? sectionHtml('성장 완료', done.length) + listHtml(done, today, progress) : '');
+        list(pending) + '</details>' : '') +
+      (added.length ? sectionHtml('판매 목록', added.length) + list(added) : '') +
+      (done.length ? sectionHtml('성장 완료', done.length) + list(done) : '') +
+      // A second save/cancel pair at the end of the lists.
+      (editing ? '<div class="pg-tools pg-tools-end">' +
+        '<button type="button" class="pg-primary" data-act="edit-save">저장</button>' +
+        '<button type="button" data-act="edit-cancel">취소</button></div>' : '');
   }
 
   // Editor shown under a row: stage choices and the elephs held.
@@ -190,6 +218,7 @@
 
   function mount(el, data, today) {
     var progress = loadProgress();
+    var editing = false;
     // Name column width: wide enough for the longest name plus about 1.5
     // characters, and for any name with its month badge on one line. Measured
     // from the rendered text (only possible while the page is visible).
@@ -215,7 +244,9 @@
     }
     function render() {
       var fold = el.querySelector('.st-fold');
-      el.innerHTML = expertHtml(data, today, progress, !!(fold && fold.open));
+      el.innerHTML = expertHtml(data, today, progress, !!(fold && fold.open), editing);
+      var tabs = document.querySelector('.site-tabs');
+      if (tabs && tabs.offsetHeight) el.style.setProperty('--site-tabs-h', tabs.offsetHeight + 'px');
       fitNames();
     }
     render();
@@ -285,9 +316,42 @@
       render();
     }
 
+    // Edit mode: read every row's controls and save them together. Students
+    // not on the page keep their saved values.
+    function saveEdits() {
+      var next = {};
+      Object.keys(progress).forEach(function (n) { next[n] = progress[n]; });
+      Array.prototype.forEach.call(el.querySelectorAll('.st-row'), function (row) {
+        var name = row.getAttribute('data-name');
+        var stage = row.querySelector('.pg-stage-select').value;
+        var held = row.querySelector('.pg-held-edit').value;
+        if (!stage) { delete next[name]; return; }
+        next[name] = [stage, stage === DONE ? 0 : Math.min(999, Math.max(0, Math.floor(+held || 0)))];
+      });
+      progress = next;
+      saveProgress(progress);
+    }
+
+    // Keeps a row's count box and bar in step with its controls while editing.
+    function onEditInput(row) {
+      var stage = row.querySelector('.pg-stage-select').value;
+      var input = row.querySelector('.pg-held-edit');
+      input.disabled = !stage || stage === DONE;
+      if (input.disabled) input.value = '';
+      var p = stage ? [stage, stage === DONE ? 0 : Math.max(0, Math.floor(+input.value || 0))] : undefined;
+      row.querySelector('.pg-bar').outerHTML = barHtml(p);
+    }
+
+    function hidePanels() {
+      Array.prototype.forEach.call(el.querySelectorAll('.pg-panel'), function (b) { b.hidden = true; });
+    }
+
     // Import: paste exported JSON into the text box; it replaces all saved
     // progress once it parses.
     function onToolClick(name) {
+      if (name === 'edit') { hidePanels(); closeEditor(); editing = true; render(); return; }
+      if (name === 'edit-cancel') { editing = false; render(); return; }
+      if (name === 'edit-save') { saveEdits(); editing = false; render(); return; }
       var box = el.querySelector('.pg-import');
       var area = box.querySelector('textarea');
       var msg = box.querySelector('.pg-import-msg');
@@ -324,7 +388,7 @@
       var act = t.closest('.pg-tools [data-act], .pg-panel [data-act]');
       if (act) { onToolClick(act.getAttribute('data-act')); return; }
       var main = t.closest('.st-main');
-      if (!main) return;
+      if (!main || editing) return;
       var row = main.parentNode;
       var wasOpen = row.classList.contains('is-editing');
       closeEditor();
@@ -332,6 +396,12 @@
       row.classList.add('is-editing');
       row.insertAdjacentHTML('beforeend', editorHtml(progress[row.getAttribute('data-name')]));
     };
+
+    el.oninput = function (ev) {
+      var row = editing && ev.target.closest('.st-row');
+      if (row && ev.target.closest('.pg-edit')) onEditInput(row);
+    };
+    el.onchange = el.oninput;
 
   }
 
