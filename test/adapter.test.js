@@ -392,8 +392,19 @@ test('expert students split into pending and shop-added students', () => {
   assert.match(html, /<span class="st-name">무츠키\(새해\)<time class="st-date" datetime="2026-08-01">8월<\/time><\/span>/);
   assert.match(html, /<details class="st-fold"><summary class="st-section">추가예정 <span class="st-count">2<\/span><\/summary><ul class="st-list"><li class="st-row st-limited" data-name="카요코\(새해\)">/);
   assert.match(ElephPage.expertHtml(data, '2026-07-01', {}, true), /<details class="st-fold" open>/);
-  assert.match(html, /<\/details><p class="st-section">판매 목록 <span class="st-count">4<\/span><\/p><ul class="st-list">/);
+  assert.match(html, /<\/details><p class="st-section">판매 목록 <span class="st-count">4<\/span><label class="st-filter"><input type="checkbox" data-act="hide-welfare"> 배포캐릭터 제외<\/label><\/p><ul class="st-list st-sale">/);
   assert.match(html, /<li class="st-row st-fes" data-name="와카모"><button type="button" class="st-main"><span class="st-name">와카모<\/span>/);
+});
+
+test('expert sale list can hide distributed students', () => {
+  const ElephPage = require('../js/eleph.js');
+  const data = { pending: [{ name: '노노미', kind: 'welfare' }], added: [
+    { name: '와카모', kind: 'fes' }, { name: '세리카(새해)', kind: 'welfare' }, { name: '아루', kind: 'welfare' }] };
+  const html = ElephPage.expertHtml(data, '2026-10-15', { '아루': ['전4', 0] }, false, false, true);
+  assert.match(html, /판매 목록 <span class="st-count">1<\/span><label class="st-filter"><input type="checkbox" data-act="hide-welfare" checked>/);
+  assert.match(html, /<ul class="st-list st-sale is-hide-welfare"><li class="st-row st-fes" data-name="와카모">[^]*<li class="st-row st-welfare" data-name="세리카\(새해\)">/);
+  assert.match(html, /추가예정 <span class="st-count">1<\/span>/);
+  assert.match(html, /성장 완료 <span class="st-count">1<\/span><\/p><ul class="st-list"><li class="st-row st-welfare" data-name="아루">/);
 });
 
 test('expert progress shows the target stage and fills the bar up to it', () => {

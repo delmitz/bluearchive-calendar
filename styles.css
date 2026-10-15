@@ -98,9 +98,13 @@ body{margin:0}
 .pg-note:empty,.pg-error:empty{display:none}
 .pg-panel-acts{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
 .pg-tools button,.pg-editor button,.pg-panel button{padding:5px 12px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.pg-editor button:disabled{opacity:.45;cursor:default}
 .pg-editor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 14px 12px}
 .pg-stages{display:flex;flex-wrap:wrap;gap:4px}
 .pg-editor [aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pg-held-group{display:flex;align-items:center}
+.pg-held-group:has(.pg-buy) .pg-held-input input{border-radius:8px 0 0 8px}
+.pg-editor .pg-buy{height:27px;box-sizing:border-box;margin-left:-1px;padding:0 9px;border-radius:0 8px 8px 0}
 .pg-held-input{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink-soft)}
 .pg-held-input input{width:64px;padding:4px 8px;border:1px solid var(--card-line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px}
 .st-date{display:inline-block;white-space:nowrap;margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--band);font-size:11px;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums;vertical-align:1px}
@@ -147,6 +151,9 @@ body{margin:0}
 }
 .hd-preset-select{width:100%;max-width:140px;height:30px;box-sizing:border-box;padding:0 4px;border:1px solid var(--card-line);border-radius:7px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px}
 .hd-empty{color:var(--hd-done-ink)}
+.st-filter{display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:4px;cursor:pointer;user-select:none}
+.st-filter input{margin:0;accent-color:var(--accent)}
+.st-sale.is-hide-welfare .st-welfare{display:none}
 .hd-show-all{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;user-select:none}
 .hd-show-all input{margin:0;accent-color:var(--accent)}
 .hd-table td.is-done{color:var(--hd-done-ink);font-weight:500}

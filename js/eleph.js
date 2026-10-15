@@ -105,8 +105,8 @@
       barHtml(p) + '</span></' + tag + '></li>';
   }
 
-  function listHtml(students, today, progress, editing) {
-    return '<ul class="st-list">' + students.map(function (s) {
+  function listHtml(students, today, progress, editing, cls) {
+    return '<ul class="st-list' + (cls ? ' ' + cls : '') + '">' + students.map(function (s) {
       return rowHtml(s, today, progress, editing);
     }).join('') + '</ul>';
   }
@@ -115,10 +115,21 @@
     return '<p class="st-section">' + label + ' <span class="st-count">' + count + '</span></p>';
   }
 
+  function saleCount(added, hideWelfare) {
+    return added.filter(function (s) { return !hideWelfare || s.kind !== 'welfare'; }).length;
+  }
+
+  function saleSectionHtml(added, hideWelfare) {
+    return '<p class="st-section">판매 목록 <span class="st-count">' + saleCount(added, hideWelfare) + '</span>' +
+      '<label class="st-filter"><input type="checkbox" data-act="hide-welfare"' + (hideWelfare ? ' checked' : '') +
+      '> 배포캐릭터 제외</label></p>';
+  }
+
   // data: Adapter.expertStudents() output. today: "YYYY-MM-DD".
   // progress: { name: [stage, held] }. pendingOpen: show 추가예정 unfolded.
+  // hideWelfare: leave distributed students out of the 판매 목록 list.
   // editing: every row shows stage and count controls, saved all at once.
-  function expertHtml(data, today, progress, pendingOpen, editing) {
+  function expertHtml(data, today, progress, pendingOpen, editing, hideWelfare) {
     progress = progress || {};
     if (!data.pending.length && !data.added.length) return '<p class="page-empty">표시할 학생이 없습니다.</p>';
     // Fully grown students (전4) are gathered in a last list, in page order.
@@ -148,7 +159,10 @@
       (pending.length ? '<details class="st-fold"' + (pendingOpen ? ' open' : '') + '>' +
         '<summary class="st-section">추가예정 <span class="st-count">' + pending.length + '</span></summary>' +
         list(pending) + '</details>' : '') +
-      (added.length ? sectionHtml('판매 목록', added.length) + list(added) : '') +
+      // The 판매 목록 rows are all rendered; the checkbox only hides the
+      // distributed ones (so bulk-edit drafts survive toggling it).
+      (added.length ? saleSectionHtml(added, hideWelfare) +
+        listHtml(added, today, progress, editing, 'st-sale' + (hideWelfare ? ' is-hide-welfare' : '')) : '') +
       (done.length ? sectionHtml('성장 완료', done.length) + list(done) : '') +
       // A second save/cancel pair at the end of the lists.
       (editing ? '<div class="pg-tools pg-tools-end">' +
@@ -156,17 +170,22 @@
         '<button type="button" data-act="edit-cancel">취소</button></div>' : '');
   }
 
-  // Editor shown under a row: stage choices and the elephs held.
-  function editorHtml(p, stages) {
+  // Editor shown under a row: stage choices (「없음」 clears the entry on
+  // save) and the elephs held.
+  // buy: add a 「+10」 button beside the count (held + 10, then save).
+  function editorHtml(p, stages, buy) {
     var cur = p ? p[0] : '';
+    var off = !cur || cur === DONE ? ' disabled' : '';
     return '<div class="pg-editor">' +
-      '<div class="pg-stages" role="group" aria-label="목표 단계">' + keysOf(stages || STAGES).map(function (k) {
+      '<div class="pg-stages" role="group" aria-label="목표 단계">' +
+      '<button type="button" data-stage="" aria-pressed="' + !cur + '">없음</button>' +
+      keysOf(stages || STAGES).map(function (k) {
         return '<button type="button" data-stage="' + k + '" aria-pressed="' + (k === cur) + '">' + starsHtml(k) + '</button>';
       }).join('') + '</div>' +
-      '<label class="pg-held-input">보유 <input type="number" min="0" max="999" inputmode="numeric" value="' +
-      (p && p[0] !== DONE ? p[1] : 0) + '"' + (cur === DONE ? ' disabled' : '') + '></label>' +
-      '<button type="button" data-act="save">저장</button>' +
-      '<button type="button" data-act="clear">지우기</button></div>';
+      '<span class="pg-held-group"><label class="pg-held-input">보유 <input type="number" min="0" max="999" inputmode="numeric" value="' +
+      (p && p[0] !== DONE ? p[1] : 0) + '"' + off + '></label>' +
+      (buy ? '<button type="button" class="pg-buy" data-act="buy" aria-label="10개 구매"' + off + '>+10</button>' : '') +
+      '</span><button type="button" data-act="save">저장</button></div>';
   }
 
   // Browser side: progress storage, row editing, export and import.
@@ -271,12 +290,12 @@
   }
 
   // Opens (or closes, if already open) the editor under a row.
-  function toggleRowEditor(el, row, progress, stages) {
+  function toggleRowEditor(el, row, progress, stages, buy) {
     var wasOpen = row.classList.contains('is-editing');
     closeEditors(el);
     if (wasOpen) return;
     row.classList.add('is-editing');
-    row.insertAdjacentHTML('beforeend', editorHtml(progress[row.getAttribute('data-name')], stages));
+    row.insertAdjacentHTML('beforeend', editorHtml(progress[row.getAttribute('data-name')], stages, buy));
   }
 
   // A click inside a row editor: picks a stage, or saves/clears the row's
@@ -289,20 +308,27 @@
       Array.prototype.forEach.call(editor.querySelectorAll('[data-stage]'), function (b) {
         b.setAttribute('aria-pressed', String(b === stageBtn));
       });
-      input.disabled = stageBtn.getAttribute('data-stage') === DONE;
+      var picked = stageBtn.getAttribute('data-stage');
+      input.disabled = !picked || picked === DONE;
+      var buy = editor.querySelector('[data-act="buy"]');
+      if (buy) buy.disabled = input.disabled;
       return false;
     }
     var act = t.closest('[data-act]');
     if (!act) return false;
-    if (act.getAttribute('data-act') === 'save') {
+    var what = act.getAttribute('data-act');
+    if (what === 'save' || what === 'buy') {
       var chosen = editor.querySelector('[data-stage][aria-pressed="true"]');
       if (!chosen) return false;
       var stage = chosen.getAttribute('data-stage');
-      progress[name] = [stage, stage === DONE ? 0 : Math.max(0, Math.floor(+input.value || 0))];
-      return true;
-    }
-    if (act.getAttribute('data-act') === 'clear') {
-      delete progress[name];
+      if (what === 'buy' && (!stage || stage === DONE)) return false;
+      if (!stage) {
+        if (!progress[name]) return false;
+        delete progress[name];
+        return true;
+      }
+      var held = Math.max(0, Math.floor(+input.value || 0)) + (what === 'buy' ? 10 : 0);
+      progress[name] = [stage, stage === DONE ? 0 : Math.min(999, held)];
       return true;
     }
     return false;
@@ -311,10 +337,11 @@
   function mount(el, data, today) {
     var progress = getProgress();
     var editing = false;
+    var hideWelfare = false;
     function fitNames() { fitNameColumn(el); }
     function render() {
       var fold = el.querySelector('.st-fold');
-      el.innerHTML = expertHtml(data, today, progress, !!(fold && fold.open), editing);
+      el.innerHTML = expertHtml(data, today, progress, !!(fold && fold.open), editing, hideWelfare);
       var tabs = document.querySelector('.site-tabs');
       if (tabs && tabs.offsetHeight) el.style.setProperty('--site-tabs-h', tabs.offsetHeight + 'px');
       fitNames();
@@ -432,9 +459,10 @@
         return lib.toBlob(el, {
           pixelRatio: ratio,
           backgroundColor: getComputedStyle(el.closest('.app') || document.body).backgroundColor,
-          // Toolbar and panels are controls, not content.
+          // Toolbar, panels and the list filter are controls, not content.
           filter: function (node) {
-            return !(node.classList && (node.classList.contains('pg-tools') || node.classList.contains('pg-panel')));
+            return !(node.classList && (node.classList.contains('pg-tools') || node.classList.contains('pg-panel') ||
+              node.classList.contains('st-filter')));
           }
         });
       }).then(function (blob) {
@@ -523,10 +551,19 @@
       if (act) { onToolClick(act.getAttribute('data-act'), act); return; }
       var main = t.closest('.st-main');
       if (!main || editing) return;
-      toggleRowEditor(el, main.parentNode, progress);
+      toggleRowEditor(el, main.parentNode, progress, null, true);
     };
 
     el.oninput = function (ev) {
+      if (ev.target.matches('[data-act="hide-welfare"]')) {
+        hideWelfare = ev.target.checked;
+        el.querySelector('.st-sale').classList.toggle('is-hide-welfare', hideWelfare);
+        ev.target.closest('.st-section').querySelector('.st-count').textContent = saleCount(data.added.filter(function (s) {
+          return !(progress[s.name] && progress[s.name][0] === DONE);
+        }), hideWelfare);
+        fitNames();
+        return;
+      }
       if (ev.target.closest('.pg-import')) { resetImport(); return; }
       var row = editing && ev.target.closest('.st-row');
       if (row && ev.target.closest('.pg-edit')) onEditInput(row);
