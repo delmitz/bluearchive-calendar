@@ -352,7 +352,7 @@ test('expiry rows without an end date become story text lines', () => {
 });
 
 test('student lists collect limited, fest and distributed students by first appearance', () => {
-  const GrowthPage = require('../js/growth.js');
+  const ElephPage = require('../js/eleph.js');
   const csv = scheduleCsv([
     '2026-01-06,2026-01-20,14,,,,이벤트,옛 이벤트,신규,하루카(새해),,',
     '2026-08-12,2026-08-26,14,,,,이벤트,옛 이벤트,복각,하루카(새해),,',
@@ -370,8 +370,8 @@ test('student lists collect limited, fest and distributed students by first appe
   });
 });
 
-test('cert students split into pending and shop-added students', () => {
-  const GrowthPage = require('../js/growth.js');
+test('expert students split into pending and shop-added students', () => {
+  const ElephPage = require('../js/eleph.js');
   const schemaCsv = SCHEMA_CSV + '\n상점,대상 상점,캐릭터 목록,,,';
   const csv = scheduleCsv([
     '2026-01-06,2026-01-20,14,,,,이벤트,옛 이벤트,신규,하루카(새해),,',
@@ -385,25 +385,25 @@ test('cert students split into pending and shop-added students', () => {
     '2026-08-01,,,,,,상점,현상수배,세나,,'
   ]);
   const schema = Adapter.buildSchema(Adapter.csvToRecords(schemaCsv));
-  const data = Adapter.certStudents(Adapter.csvToRecords(csv), schema);
+  const data = Adapter.expertStudents(Adapter.csvToRecords(csv), schema);
   assert.deepEqual(data.pending.map((s) => s.name), ['카요코(새해)', '노노미']);
   assert.deepEqual(data.added.map((s) => s.name), ['무츠키(새해)', '와카모', '하루카(새해)', '아루(새해)']);
-  const html = GrowthPage.certHtml(data, '2026-07-01');
+  const html = ElephPage.expertHtml(data, '2026-07-01');
   assert.match(html, /<span class="st-name">무츠키\(새해\)<time class="st-date" datetime="2026-08-01">8월<\/time><\/span>/);
   assert.match(html, /<details class="st-fold"><summary class="st-section">추가예정 <span class="st-count">2<\/span><\/summary><ul class="st-list"><li class="st-row st-limited" data-name="카요코\(새해\)">/);
-  assert.match(GrowthPage.certHtml(data, '2026-07-01', {}, true), /<details class="st-fold" open>/);
+  assert.match(ElephPage.expertHtml(data, '2026-07-01', {}, true), /<details class="st-fold" open>/);
   assert.match(html, /<\/details><p class="st-section">판매 목록 <span class="st-count">4<\/span><\/p><ul class="st-list">/);
   assert.match(html, /<li class="st-row st-fes" data-name="와카모"><button type="button" class="st-main"><span class="st-name">와카모<\/span>/);
 });
 
-test('cert progress shows the target stage and fills the bar up to it', () => {
-  const GrowthPage = require('../js/growth.js');
+test('expert progress shows the target stage and fills the bar up to it', () => {
+  const ElephPage = require('../js/eleph.js');
   const data = { pending: [], added: [
     { name: '마리(아이돌)', kind: 'limited', first: '2025-01-01', shop: '2025-10-01' },
     { name: '와카모', kind: 'fes', first: '2022-01-01', shop: '2022-11-08' },
     { name: '세나', kind: 'welfare', first: '2022-01-01', shop: '2022-11-08' }
   ] };
-  const html = GrowthPage.certHtml(data, '2026-10-15', { '마리(아이돌)': ['전2', 54], '와카모': ['전4', 0] });
+  const html = ElephPage.expertHtml(data, '2026-10-15', { '마리(아이돌)': ['전2', 54], '와카모': ['전4', 0] });
   const widths = (name) => {
     const row = html.split('<li ').find((r) => r.includes('data-name="' + name + '"'));
     return [...row.matchAll(/width:([0-9.]+)%/g)].map((m) => +m[1]);
@@ -424,13 +424,13 @@ test('shop rows become a text line labeled with the shop name', () => {
   assert.deepEqual(events[0].fullSubs, [{ label: '숙련 증서 상점', text: '오토기, 아이리(밴드)' }]);
 });
 
-test('cert progress under an old student name moves to the new name', () => {
-  const GrowthPage = require('../js/growth.js');
+test('expert progress under an old student name moves to the new name', () => {
+  const ElephPage = require('../js/eleph.js');
   const moved = { '시로코＊테러': ['전4', 0], '노조미': ['전2', 11] };
-  assert.equal(GrowthPage.migrateNames(moved), true);
+  assert.equal(ElephPage.migrateNames(moved), true);
   assert.deepEqual(moved, { '노조미': ['전2', 11], '시로코*테러': ['전4', 0] });
   const both = { '시로코＊테러': ['전1', 5], '시로코*테러': ['전3', 9] };
-  GrowthPage.migrateNames(both);
+  ElephPage.migrateNames(both);
   assert.deepEqual(both, { '시로코*테러': ['전3', 9] });
-  assert.equal(GrowthPage.migrateNames({ '노조미': ['전2', 11] }), false);
+  assert.equal(ElephPage.migrateNames({ '노조미': ['전2', 11] }), false);
 });

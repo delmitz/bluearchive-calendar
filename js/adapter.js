@@ -388,7 +388,7 @@
     return list;
   }
 
-  // Students for the skill certificate page: limited (한정) and fest (페스)
+  // Students for the expert permit page: limited (한정) and fest (페스)
   // pickup students and event-distributed students (배포캐릭터), each with the
   // KR date they first appeared (earliest pickup or event start), newest first.
   // Companion students joined with "&" are listed one by one.
@@ -421,20 +421,20 @@
     return { limited: sorted(lists.limited), fes: sorted(lists.fes), welfare: sorted(lists.welfare) };
   }
 
-  // Skill certificate page: the studentLists() students split by whether the
+  // Expert permit page: the studentLists() students split by whether the
   // 숙련 증서 shop sells them yet (상점 rows, 대상 상점 "숙련 증서").
   // pending: not in the shop yet, newest first appearance first.
   // added: newest shop addition first, keeping the sheet order of names
   // within the same date. Each entry: { name, kind, first, shop }.
-  var CERT_SHOP = '숙련 증서';
+  var EXPERT_SHOP = '숙련 증서';
   // Collaboration students never sold in the shop are left off the page.
-  var CERT_EXCLUDED = { '미코토': true, '쇼쿠호': true, '사텐 루이코': true, '하츠네 미쿠': true };
+  var EXPERT_EXCLUDED = { '미코토': true, '쇼쿠호': true, '사텐 루이코': true, '하츠네 미쿠': true };
   // Distributed students the sheet does not record as 배포캐릭터: 노노미 comes
   // from the first guide mission (KR launch, 2021-11-09).
-  var CERT_EXTRA_WELFARE = [{ name: '노노미', first: '2021-11-09' }];
-  function certStudents(records, schema) {
+  var EXPERT_EXTRA_WELFARE = [{ name: '노노미', first: '2021-11-09' }];
+  function expertStudents(records, schema) {
     var lists = studentLists(records, schema);
-    CERT_EXTRA_WELFARE.forEach(function (s) {
+    EXPERT_EXTRA_WELFARE.forEach(function (s) {
       if (!lists.welfare.some(function (w) { return w.name === s.name; })) lists.welfare.push(s);
     });
     var shopDay = {}, shopOrder = {}, seq = 0;
@@ -442,7 +442,7 @@
     var targetCol = shop && column(shop, '대상 상점'), namesCol = shop && column(shop, '캐릭터 목록');
     if (targetCol && namesCol) {
       records.forEach(function (rec) {
-        if (rec[COL.type] !== '상점' || rec[targetCol] !== CERT_SHOP) return;
+        if (rec[COL.type] !== '상점' || rec[targetCol] !== EXPERT_SHOP) return;
         var day = normDay(rec[COL.start]);
         if (!day) return;
         (rec[namesCol] || '').split(',').forEach(function (n) {
@@ -456,7 +456,7 @@
     var pending = [], added = [];
     ['fes', 'welfare', 'limited'].forEach(function (kind) {
       lists[kind].forEach(function (s) {
-        if (CERT_EXCLUDED[s.name]) return;
+        if (EXPERT_EXCLUDED[s.name]) return;
         var entry = { name: s.name, kind: kind, first: s.first, shop: shopDay[s.name] || '' };
         (entry.shop ? added : pending).push(entry);
       });
@@ -477,7 +477,7 @@
     sheetRowsToEvents: sheetRowsToEvents,
     eventHistory: eventHistory,
     studentLists: studentLists,
-    certStudents: certStudents
+    expertStudents: expertStudents
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Adapter = api;

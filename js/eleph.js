@@ -84,9 +84,9 @@
     return '<p class="st-section">' + label + ' <span class="st-count">' + count + '</span></p>';
   }
 
-  // data: Adapter.certStudents() output. today: "YYYY-MM-DD".
+  // data: Adapter.expertStudents() output. today: "YYYY-MM-DD".
   // progress: { name: [stage, held] }. pendingOpen: show 추가예정 unfolded.
-  function certHtml(data, today, progress, pendingOpen) {
+  function expertHtml(data, today, progress, pendingOpen) {
     progress = progress || {};
     if (!data.pending.length && !data.added.length) return '<p class="page-empty">표시할 학생이 없습니다.</p>';
     // Fully grown students (전4) are gathered in a last list, in page order.
@@ -127,7 +127,8 @@
   }
 
   // Browser side: progress storage, row editing, export and import.
-  var STORE_KEY = 'certProgress.v1';
+  var STORE_KEY = 'expertProgress.v1';
+  var OLD_STORE_KEYS = ['certProgress.v1']; // earlier key, moved on first load
 
   // Progress is keyed by student name as written in the sheet. When a name
   // changes there, add "old name": "new name" here so saved progress (and
@@ -154,6 +155,15 @@
   function loadProgress() {
     try {
       var raw = root.localStorage && root.localStorage.getItem(STORE_KEY);
+      if (!raw && root.localStorage) {
+        OLD_STORE_KEYS.some(function (k) {
+          raw = root.localStorage.getItem(k);
+          if (!raw) return false;
+          root.localStorage.setItem(STORE_KEY, raw);
+          root.localStorage.removeItem(k);
+          return true;
+        });
+      }
       if (raw) {
         var saved = JSON.parse(raw) || {};
         if (migrateNames(saved)) saveProgress(saved);
@@ -205,7 +215,7 @@
     }
     function render() {
       var fold = el.querySelector('.st-fold');
-      el.innerHTML = certHtml(data, today, progress, !!(fold && fold.open));
+      el.innerHTML = expertHtml(data, today, progress, !!(fold && fold.open));
       fitNames();
     }
     render();
@@ -325,7 +335,7 @@
 
   }
 
-  var api = { certHtml: certHtml, mount: mount, migrateNames: migrateNames };
+  var api = { expertHtml: expertHtml, mount: mount, migrateNames: migrateNames };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else root.GrowthPage = api;
+  else root.ElephPage = api;
 })(this);

@@ -66,7 +66,7 @@ body{margin:0}
 .pg-star .pg-fill{background:var(--pg-star)}
 .pg-weapon .pg-fill{background:var(--pg-weapon)}
 /* Phones: the name column fits the longest name (--st-name-w, set by
-   growth.js) and the bar takes the rest; stars sit tighter. */
+   eleph.js) and the bar takes the rest; stars sit tighter. */
 @media (max-width:480px){
 .st-main{gap:8px;padding:9px 12px}
 .st-name{flex:0 0 var(--st-name-w,auto)}
