@@ -628,12 +628,18 @@
     presets = cleanPresets(presets);
     progress = progress || {};
     var students = hardStudents();
+    // Students grouped under unselectable ★3 / ★2 / ★1 headings (optgroup).
     function menu(name, label) {
-      return '<select class="hd-preset-select" aria-label="' + label + '"><option value="">–</option>' +
-        students.map(function (st) {
+      var groups = [3, 2, 1].map(function (star) {
+        var members = students.filter(function (st) { return st.star === star; });
+        if (!members.length) return '';
+        return '<optgroup label="★' + star + '">' + members.map(function (st) {
           return '<option value="' + esc(st.name) + '"' + (st.name === name ? ' selected' : '') + '>' +
             esc(st.name) + '</option>';
-        }).join('') + '</select>';
+        }).join('') + '</optgroup>';
+      });
+      return '<select class="hd-preset-select" aria-label="' + label + '"><option value="">–</option>' +
+        groups.join('') + '</select>';
     }
     return '<div class="pg-tools hd-preset-tools">' + (editing ?
         '<span class="pg-tools-note">프리셋 편집 중</span>' +

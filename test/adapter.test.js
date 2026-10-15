@@ -517,7 +517,7 @@ test('hard preset table lists set students with progress; editing shows every sl
   assert.equal((editing.match(/<tbody>/g) || []).length, 7);
   assert.equal((editing.match(/rowspan="3"/g) || []).length, 7);
   assert.equal((editing.match(/<select class="hd-preset-select"/g) || []).length, 21);
-  assert.match(editing, /aria-label="프리셋 1 1번"><option value="">–<\/option>[^]*?<option value="유우카" selected>/);
+  assert.match(editing, /aria-label="프리셋 1 1번"><option value="">–<\/option><optgroup label="★3"><option value="네루">[^]*?<\/optgroup><optgroup label="★2"><option value="마리">[^]*?<option value="유우카" selected>[^]*?<\/optgroup><optgroup label="★1"><option value="세리나">/);
   assert.match(editing, /data-act="preset-save">저장/);
   const withProgress = ElephPage.hardPresetHtml([['스즈미', '', '']], true, { '스즈미': ['2성', 40] });
   assert.match(withProgress, /<td class="hd-preset-state"><span class="hd-preset-pg"><span class="pg-edit"><select class="pg-stage-select" aria-label="스즈미 목표 단계"><option value="">–<\/option><option value="1성">1성<\/option><option value="2성" selected>/);
