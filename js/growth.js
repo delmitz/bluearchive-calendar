@@ -5,7 +5,8 @@
 // added in JP, KR date estimated).
 // Each row shows the viewer's own progress (target stage and elephs held
 // toward it) as text and as a bar split by stage. Progress lives in this
-// browser only (localStorage), with export and import as JSON files.
+// browser only (localStorage); export shows it as one line of JSON to copy
+// and import takes that JSON pasted into a text box.
 (function (root) {
   'use strict';
 
@@ -94,8 +95,16 @@
     var pending = data.pending.filter(notDone), added = data.added.filter(notDone);
     var done = data.pending.concat(data.added).filter(isDone);
     return '<div class="pg-tools"><button type="button" data-act="export">내보내기</button>' +
-      '<button type="button" data-act="import">가져오기</button>' +
-      '<input type="file" accept="application/json,.json" hidden></div>' +
+      '<button type="button" data-act="import">가져오기</button></div>' +
+      '<div class="pg-export pg-panel" hidden><textarea rows="4" readonly spellcheck="false" ' +
+      'aria-label="내보낼 JSON"></textarea><p class="pg-export-msg pg-note" role="status"></p>' +
+      '<div class="pg-panel-acts"><button type="button" data-act="export-copy">복사</button>' +
+      '<button type="button" data-act="export-close">닫기</button></div></div>' +
+      '<div class="pg-import pg-panel" hidden><textarea rows="5" spellcheck="false" ' +
+      'placeholder="내보낸 JSON 텍스트를 붙여넣으세요" aria-label="가져올 JSON"></textarea>' +
+      '<p class="pg-import-msg pg-error" role="status"></p><div class="pg-panel-acts">' +
+      '<button type="button" data-act="import-apply">불러오기</button>' +
+      '<button type="button" data-act="import-cancel">취소</button></div></div>' +
       // Upcoming students fold away (closed unless pendingOpen).
       (pending.length ? '<details class="st-fold"' + (pendingOpen ? ' open' : '') + '>' +
         '<summary class="st-section">추가예정 <span class="st-count">' + pending.length + '</span></summary>' +
@@ -211,13 +220,31 @@
       });
     }
 
-    function exportProgress() {
-      var blob = new Blob([JSON.stringify(progress, null, 1)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'cert-progress.json';
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    // Export: show the saved progress as one line of JSON to copy.
+    function toggleExport() {
+      var box = el.querySelector('.pg-export');
+      el.querySelector('.pg-import').hidden = true;
+      box.hidden = !box.hidden;
+      box.querySelector('.pg-export-msg').textContent = '';
+      if (!box.hidden) box.querySelector('textarea').value = JSON.stringify(progress);
+    }
+
+    function copyExport() {
+      var box = el.querySelector('.pg-export');
+      var area = box.querySelector('textarea');
+      var msg = box.querySelector('.pg-export-msg');
+      function done() { msg.textContent = '복사했습니다.'; }
+      function fallback() {
+        area.focus();
+        area.select();
+        try { if (document.execCommand('copy')) { done(); return; } } catch (e) { /* ignore */ }
+        msg.textContent = '자동 복사가 안 되니 선택된 내용을 직접 복사해 주세요.';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(area.value).then(done, fallback);
+      } else {
+        fallback();
+      }
     }
 
     function onEditorClick(editor, t) {
@@ -248,16 +275,44 @@
       render();
     }
 
+    // Import: paste exported JSON into the text box; it replaces all saved
+    // progress once it parses.
+    function onToolClick(name) {
+      var box = el.querySelector('.pg-import');
+      var area = box.querySelector('textarea');
+      var msg = box.querySelector('.pg-import-msg');
+      if (name === 'export') { toggleExport(); return; }
+      if (name === 'export-copy') { copyExport(); return; }
+      if (name === 'export-close') { el.querySelector('.pg-export').hidden = true; return; }
+      if (name === 'import') {
+        el.querySelector('.pg-export').hidden = true;
+        box.hidden = !box.hidden;
+        msg.textContent = '';
+        if (!box.hidden) area.focus();
+        return;
+      }
+      if (name === 'import-cancel') { box.hidden = true; area.value = ''; msg.textContent = ''; return; }
+      if (name !== 'import-apply') return;
+      var parsed;
+      try { parsed = JSON.parse(area.value); } catch (e) { parsed = null; }
+      var next = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? cleanProgress(parsed) : null;
+      if (!next || !Object.keys(next).length) {
+        msg.textContent = '불러올 수 없는 내용입니다. 내보내기로 받은 JSON을 그대로 붙여넣어 주세요.';
+        return;
+      }
+      if (Object.keys(progress).length &&
+          !root.confirm('저장된 진행 상황을 붙여넣은 내용으로 바꿉니다. 계속할까요?')) return;
+      progress = next;
+      saveProgress(progress);
+      render();
+    }
+
     el.onclick = function (ev) {
       var t = ev.target;
       var editor = t.closest('.pg-editor');
       if (editor) { onEditorClick(editor, t); return; }
-      var act = t.closest('.pg-tools [data-act]');
-      if (act) {
-        if (act.getAttribute('data-act') === 'export') exportProgress();
-        else el.querySelector('.pg-tools input[type=file]').click();
-        return;
-      }
+      var act = t.closest('.pg-tools [data-act], .pg-panel [data-act]');
+      if (act) { onToolClick(act.getAttribute('data-act')); return; }
       var main = t.closest('.st-main');
       if (!main) return;
       var row = main.parentNode;
@@ -268,21 +323,6 @@
       row.insertAdjacentHTML('beforeend', editorHtml(progress[row.getAttribute('data-name')]));
     };
 
-    el.onchange = function (ev) {
-      var input = ev.target;
-      if (!input.matches('.pg-tools input[type=file]') || !input.files[0]) return;
-      var reader = new FileReader();
-      reader.onload = function () {
-        try {
-          progress = cleanProgress(JSON.parse(reader.result));
-          saveProgress(progress);
-          render();
-        } catch (e) {
-          alert('가져올 수 없는 파일입니다.');
-        }
-      };
-      reader.readAsText(input.files[0]);
-    };
   }
 
   var api = { certHtml: certHtml, mount: mount, migrateNames: migrateNames };

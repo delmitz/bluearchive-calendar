@@ -78,7 +78,14 @@ body{margin:0}
 .pg-stars svg{width:12px;height:12px;margin:0 -1px}
 }
 .pg-tools{display:flex;justify-content:flex-end;gap:6px;margin:-8px 0 12px}
-.pg-tools button,.pg-editor button{padding:5px 12px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.pg-panel{margin:0 0 16px;padding:12px;border:1px solid var(--card-line);border-radius:12px;background:var(--surface)}
+.pg-panel[hidden]{display:none}
+.pg-panel textarea{display:block;width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--card-line);border-radius:8px;background:var(--bg);color:var(--ink);font:12.5px/1.45 ui-monospace,Menlo,monospace;resize:vertical;word-break:break-all}
+.pg-note,.pg-error{margin:6px 0 0;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.pg-error{color:var(--pk-limited)}
+.pg-note:empty,.pg-error:empty{display:none}
+.pg-panel-acts{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+.pg-tools button,.pg-editor button,.pg-panel button{padding:5px 12px;border:1px solid var(--card-line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .pg-editor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:4px 14px 12px}
 .pg-stages{display:flex;flex-wrap:wrap;gap:4px}
 .pg-editor [aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
