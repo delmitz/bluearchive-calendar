@@ -110,6 +110,42 @@
     render();
   });
 
+  // Note popover: clicking a note icon (.memo-btn) shows its row's 메모
+  // below the icon (above it when there is no room); clicking elsewhere,
+  // Escape, scrolling or resizing closes it.
+  var memoPop = null;
+  function closeMemo() {
+    if (!memoPop) return;
+    memoPop.btn.setAttribute('aria-expanded', 'false');
+    memoPop.el.remove();
+    memoPop = null;
+  }
+  function openMemo(btn) {
+    var el = document.createElement('div');
+    el.className = 'memo-pop';
+    el.setAttribute('role', 'note');
+    el.textContent = btn.getAttribute('data-memo');
+    app.appendChild(el);
+    var r = btn.getBoundingClientRect();
+    var w = el.offsetWidth, h = el.offsetHeight;
+    var top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8 && r.top - 6 - h > 8) top = r.top - 6 - h;
+    el.style.top = top + 'px';
+    el.style.left = Math.max(8, Math.min(r.left - 8, window.innerWidth - w - 8)) + 'px';
+    btn.setAttribute('aria-expanded', 'true');
+    memoPop = { el: el, btn: btn };
+  }
+  document.addEventListener('click', function (e) {
+    if (memoPop && memoPop.el.contains(e.target)) return;
+    var btn = e.target.closest ? e.target.closest('.memo-btn') : null;
+    var wasOpen = memoPop && memoPop.btn === btn;
+    closeMemo();
+    if (btn && !wasOpen) openMemo(btn);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMemo(); });
+  window.addEventListener('scroll', closeMemo, true);
+  window.addEventListener('resize', closeMemo);
+
   window.addEventListener('resize', function () { Timeline.layout(timelineEl); });
   // Layout needs the page to be visible; redo it when the timeline tab opens.
   window.addEventListener('route', function (e) {

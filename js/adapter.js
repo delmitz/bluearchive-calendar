@@ -6,7 +6,7 @@
 
   var DAY_MS = 86400000;
   // Dates follow the Korean server schedule.
-  var COL = { start: '한섭시작일자', end: '한섭종료일자', type: '종류' };
+  var COL = { start: '한섭시작일자', end: '한섭종료일자', type: '종류', memo: '메모' };
   var SCHEMA_TYPE_COL = '종류';
   var ARMOR_KEYS = { '경장갑': 'light', '중장갑': 'heavy', '특수장갑': 'special', '탄력장갑': 'elastic' };
   var PICKUP_KIND = { '신규': 'new', '복각': 'rerun' };
@@ -154,6 +154,7 @@
       rows.push({
         order: order, type: type, start: start, end: end,
         t: parseDay(start), endT: end ? parseDay(end) : null,
+        memo: rec[COL.memo] || '',
         get: function (meaning) { var c = column(map, meaning); return c ? (rec[c] || '') : ''; }
       });
     });
@@ -180,15 +181,16 @@
         var card = newCard(kind, r.start, r.end, r.get('제목'));
         // The one student given out by the event, when the sheet names one.
         if (r.get('배포캐릭터')) card.welfare = r.get('배포캐릭터');
+        withMemo(card, r);
       } else if (r.type === '메인스토리') {
         var ep = r.get('화수');
-        out.push(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
-          : { type: 'story', start: r.start, name: r.get('제목') });
+        out.push(withMemo(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
+          : { type: 'story', start: r.start, name: r.get('제목') }, r));
       } else if (r.type === '제약해제결전') {
         if (!r.end) return;
         // Raids open the day before the date written in the sheet.
-        out.push({ type: 'raid', start: iso(r.t - DAY_MS), end: inclusiveEnd(r.end),
-          name: r.get('보스'), terrain: r.get('지형'), armor: armorList(r.get('방어타입')) });
+        out.push(withMemo({ type: 'raid', start: iso(r.t - DAY_MS), end: inclusiveEnd(r.end),
+          name: r.get('보스'), terrain: r.get('지형'), armor: armorList(r.get('방어타입')) }, r));
       }
     });
 
@@ -211,6 +213,7 @@
     function push(target, key, value) { (target[key] = target[key] || []).push(value); }
 
     function placeOrGap(r, key, value) {
+      withMemo(value, r);
       var card = findCard(r);
       if (!card) {
         if (!r.end) return;
@@ -275,7 +278,7 @@
         addCampaign(c, r);
         return;
       }
-      list.push(text);
+      list.push(withMemo(text, r));
     });
     sortCampaignLines(campaigns);
 
@@ -283,6 +286,12 @@
       delete e._t; delete e._endT; delete e._gapKey;
     });
     return out;
+  }
+
+  // Sets the row's 메모 (free note) on the displayed object, when it has one.
+  function withMemo(obj, r) {
+    if (r.memo) obj.memo = r.memo;
+    return obj;
   }
 
   // Sub-event line as { label, text }: the label is the kind (or the
@@ -294,6 +303,10 @@
   // join one group ("A·B"); groups are separated by ", ", full-length groups
   // first, then short ones by start date, each followed by its weekdays.
   function addCampaign(c, r) {
+    // A shared line collects the notes of all its rows, one per line.
+    if (r.memo && (c.line.memo || '').split('\n').indexOf(r.memo) < 0) {
+      c.line.memo = c.line.memo ? c.line.memo + '\n' + r.memo : r.memo;
+    }
     var period = r.start + '|' + (r.end || '');
     var short = !!r.end && (r.endT - r.t) / DAY_MS < 7;
     var g = c.groups.filter(function (x) { return x.period === period; })[0];

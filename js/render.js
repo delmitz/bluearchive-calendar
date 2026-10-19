@@ -18,7 +18,8 @@
   function textItem(v) {
     var text = typeof v === 'object' && v ? v.text : v;
     var label = typeof v === 'object' && v ? (v.label || '') : '';
-    return { text: text, label: label, cls: isPlaceholder(text) ? 'ph' : '' };
+    var memo = typeof v === 'object' && v ? (v.memo || '') : '';
+    return { text: text, label: label, cls: isPlaceholder(text) ? 'ph' : '', memo: memo };
   }
 
   var PICKUP_KIND = { 'new': '신규', rerun: '복각' };
@@ -29,6 +30,7 @@
     item.tier = PICKUP_TIER[p.tier] ? p.tier : 'normal';
     item.label = PICKUP_TIER[item.tier];
     item.isNew = item.kind === 'new';
+    item.memo = p.memo || '';
     return item;
   }
 
@@ -45,6 +47,7 @@
     item.terrain = b.terrain || '';
     item.label = BATTLE_LABELS[b.type] || b.type;
     item.armorGroups = armorGroups(b.armor);
+    item.memo = b.memo || '';
     return item;
   }
   // armor is either a flat list (one group) or a list of groups,
@@ -109,6 +112,7 @@
           terrain: e.terrain || '',
           nameCls: isPlaceholder(e.name) ? 'ph' : '',
           armorGroups: armorGroups(e.armor),
+          memo: e.memo || '',
           endT: parseDay(e.end),
           // Raids run n weeks minus a day; shown simply as "n주간".
           weeks: Math.round((Math.round((parseDay(e.end) - x.t) / DAY_MS) + 1) / 7)
@@ -123,6 +127,7 @@
       item.typeLabel = TYPE_LABELS[e.type] || e.type;
       item.name = e.name || '';
       item.welfare = e.welfare || '';
+      item.memo = e.memo || '';
       item.nameCls = isPlaceholder(item.name) ? 'ph' : '';
       item.fullSubs = (e.fullSubs || []).map(textItem);
       item.battles = (e.battles || []).map(battleItem);
@@ -132,7 +137,7 @@
       if (e.type === 'story' || !e.end) {
         item.isStory = true;
         item.titles = item.name ? [{ typeLabel: item.typeLabel, name: item.name, nameCls: item.nameCls,
-          episodes: e.episodes || '' }] : [];
+          episodes: e.episodes || '', memo: item.memo }] : [];
         day.items.push(item);
         return;
       }
@@ -241,6 +246,15 @@
     });
   }
 
+  // Note icon after an entry whose sheet row has a 메모; the page shows the
+  // note when it is clicked (see app.js).
+  var MEMO_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 2.5h9a1 1 0 0 1 1 1v6.2L9.7 13.5H3.5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"/>' +
+    '<path d="M9.5 13.3V10.5a1 1 0 0 1 1-1h2.8M5 6h6M5 8.5h3"/></svg>';
+  function memoHtml(memo) {
+    return memo ? '<button type="button" class="memo-btn" aria-label="메모 보기" data-memo="' + esc(memo) + '">' +
+      MEMO_ICON + '</button>' : '';
+  }
+
   // "Main ~Sub~" -> { main, sub }; sub is '' when the title has no subtitle.
   function splitTitle(name) {
     var m = String(name).match(/^(.*?\S)\s*[~～]\s*(.*?)\s*[~～]?\s*$/);
@@ -271,7 +285,7 @@
     return '<' + tag + ' class="m-card raid raid-' + phase + (extraCls ? ' ' + extraCls : '') + '">' +
       '<span class="tag tag-raid">제약해제결전</span>' +
       '<span class="raid-name ' + r.nameCls + '">' + esc(r.name) + terrainHtml(r.terrain) + '</span>' +
-      armorsHtml(r.armorGroups) +
+      armorsHtml(r.armorGroups) + memoHtml(r.memo) +
       '<span class="raid-phase">' + (phase === 'start' ? '시작 (' + r.weeks + '주간)' : '종료 (' + md(r.endT) + ')') + '</span>' +
       '</' + tag + '>';
   }
@@ -282,7 +296,7 @@
       '<div class="pickup-list">' + g.pickups.map(function (p) {
         return '<div class="row-wrap"><span class="' + p.pkCls + '">' +
           (p.isNew ? '<span class="pk-badge">NEW</span>' : '') + esc(p.label) + '</span>' +
-          '<span class="pickup-name ' + p.cls + p.nameCls + '">' + esc(p.text) + '</span></div>';
+          '<span class="pickup-name ' + p.cls + p.nameCls + '">' + esc(p.text) + '</span>' + memoHtml(p.memo) + '</div>';
       }).join('') + '</div></div>';
   }
 
@@ -290,7 +304,7 @@
     return list.map(function (b) {
       return '<div class="row-wrap"><span class="tag">' + esc(b.label) + '</span>' +
         '<span class="battle-name ' + b.cls + '">' + esc(b.text) + terrainHtml(b.terrain) + '</span>' +
-        armorsHtml(b.armorGroups) + '</div>';
+        armorsHtml(b.armorGroups) + memoHtml(b.memo) + '</div>';
     }).join('');
   }
 
@@ -302,7 +316,7 @@
   function subsHtml(list) {
     return list.map(function (s) {
       return '<p class="sub">' + (s.label ? '<span class="sub-label' + (s.label === '3배' ? ' sub-label-x3' : '') + '">' + esc(s.label) + '</span>' : '') +
-        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) + '</span></p>';
+        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) + '</span>' + memoHtml(s.memo) + '</p>';
     }).join('');
   }
 
@@ -320,7 +334,8 @@
       // Gap cards (pickups/battles outside any event) have no tag or title row.
       (item.type === 'gap' ? '' :
         '<div class="title-row"><span class="tag tag-' + esc(item.type) + '">' + esc(item.typeLabel) + '</span>' +
-        (item.name ? '<span class="title ' + item.nameCls + '">' + cardTitleHtml(item.name) + '</span>' : '') + '</div>') +
+        (item.name ? '<span class="title ' + item.nameCls + '">' + cardTitleHtml(item.name) + '</span>' : '') +
+        memoHtml(item.memo) + '</div>') +
       (item.welfare ? '<div class="row-wrap"><span class="tag">배포</span>' +
         '<span class="battle-name">' + esc(item.welfare) + '</span></div>' : '') +
       pickupsHtml(item) + battlesHtml(item.battles) + subsHtml(item.fullSubs) +
@@ -348,7 +363,8 @@
       return '<div class="title-row">' +
         '<span class="tag tag-story">' + esc(t.typeLabel) + '</span>' +
         '<span class="title ' + t.nameCls + '">' + esc(t.name) +
-        (t.episodes ? ' <span class="title-ep">' + esc(t.episodes) + '화</span>' : '') + '</span></div>';
+        (t.episodes ? ' <span class="title-ep">' + esc(t.episodes) + '화</span>' : '') + '</span>' +
+        memoHtml(t.memo) + '</div>';
     }).join('') + subsHtml(item.fullSubs);
   }
 

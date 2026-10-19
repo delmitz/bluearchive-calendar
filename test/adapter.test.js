@@ -550,3 +550,35 @@ test('hard import reads progress with presets, or bare progress', () => {
   assert.equal(ElephPage.parseHardImport('nope'), null);
   assert.equal(ElephPage.parseHardImport('{"progress":{},"presets":[]}'), null);
 });
+
+test('rows with a 메모 get a note button after their entry', () => {
+  const head = HEADER + ',메모';
+  const csv = [head,
+    ',,,,,2026-08-12,2026-08-26,14,이벤트,판데믹 해저드 ~기적의 한 장~,복각,,,,이벤트 메모',
+    ',,,,,2026-08-12,2026-08-26,14,픽업,세나(사복),,복각,통상,,"픽업 메모, 쉼표"',
+    ',,,,,2026-08-19,2026-08-26,7,대결전,비나,야외,경장갑,탄력장갑,,대결전 메모',
+    ',,,,,2026-08-15,2026-08-17,2,캠페인,2배,경험치,,,,경험치 메모',
+    ',,,,,2026-08-12,2026-08-26,14,캠페인,2배,현상수배,,,,A',
+    ',,,,,2026-08-12,2026-08-26,14,캠페인,2배,특별의뢰,,,,B',
+    ',,,,,2026-08-19,,,메인스토리,2부 Vol.1,,,,,"스토리 메모\n두 줄"',
+    ',,,,,2026-07-30,2026-08-26,27,제약해제결전,세트,야외,경장갑,,,레이드 메모',
+    ',,,,,2026-08-12,2026-08-26,14,픽업,니야,,복각,통상,,'
+  ].join('\n');
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(SCHEMA_CSV));
+  const events = Adapter.sheetRowsToEvents(Adapter.csvToRecords(csv), schema);
+  const card = events.find((e) => e.type === 'rerun');
+  assert.equal(card.memo, '이벤트 메모');
+  assert.equal(card.pickups.find((p) => p.name === '세나(사복)').memo, '픽업 메모, 쉼표');
+  assert.equal(card.pickups.find((p) => p.name === '니야').memo, undefined);
+  const html = Timeline.rowsHtml(Timeline.buildRows(events).rows);
+  const btn = (m) => '<button type="button" class="memo-btn" aria-label="메모 보기" data-memo="' + m + '">';
+  assert.ok(html.includes(cardTitleEnd() + btn('이벤트 메모')));
+  assert.ok(html.includes('세나(사복)</span>' + btn('픽업 메모, 쉼표')));
+  assert.ok(html.includes(btn('대결전 메모')));
+  assert.ok(html.includes(btn('경험치 메모')));
+  assert.ok(html.includes(btn('A\nB')), 'a shared campaign line joins the notes of its rows');
+  assert.ok(html.includes(btn('스토리 메모\n두 줄')));
+  assert.ok(html.includes(btn('레이드 메모')));
+  assert.equal((html.match(/memo-btn/g) || []).length, 8);
+  function cardTitleEnd() { return '~기적의 한 장~</span></span>'; }
+});
