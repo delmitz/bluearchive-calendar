@@ -7,6 +7,8 @@
   var DAY_MS = 86400000;
   // Dates follow the Korean server schedule.
   var COL = { start: '한섭시작일자', end: '한섭종료일자', type: '종류', memo: '메모' };
+  // Date columns of the JP server, used by sheetRowsToEvents({ server: 'jp' }).
+  var JP_DATES = { start: '일섭시작일자', end: '일섭종료일자' };
   var SCHEMA_TYPE_COL = '종류';
   var ARMOR_KEYS = { '경장갑': 'light', '중장갑': 'heavy', '특수장갑': 'special', '탄력장갑': 'elastic' };
   var PICKUP_KIND = { '신규': 'new', '복각': 'rerun' };
@@ -133,12 +135,14 @@
   // Sheet end dates are maintenance days (exclusive); EVENTS end dates are inclusive.
   function inclusiveEnd(sheetEnd) { return iso(parseDay(sheetEnd) - DAY_MS); }
 
+  // options.server: 'jp' reads the JP server dates instead of the KR ones.
   function sheetRowsToEvents(records, schema, options) {
     var warn = (options && options.warn) || function () {};
+    var dates = options && options.server === 'jp' ? JP_DATES : COL;
     var rows = [];
     records.forEach(function (rec, order) {
       var type = rec[COL.type];
-      var start = normDay(rec[COL.start]);
+      var start = normDay(rec[dates.start]);
       if (!type || !isDay(start)) return;
       if (HIDDEN_TYPES[type]) return;
       var map = schema[type];
@@ -150,7 +154,7 @@
         warn('Schema for ' + type + ' lacks ' + missing.join(', ') + ', row skipped');
         return;
       }
-      var end = normDay(rec[COL.end]);
+      var end = normDay(rec[dates.end]);
       rows.push({
         order: order, type: type, start: start, end: end,
         t: parseDay(start), endT: end ? parseDay(end) : null,

@@ -1,6 +1,7 @@
 // Entry point: fetches the published sheet tabs, converts them to EVENTS
-// and renders the timeline from the events running today on. "Load earlier"
-// reveals older weeks client-side.
+// and renders the timelines (KR dates on 일정표, JP dates on 일섭 일정표)
+// from the events running today on. "Load earlier" reveals older weeks
+// client-side.
 (function () {
   'use strict';
 
@@ -13,18 +14,12 @@
   var WEEK_MS = 7 * 86400000;
 
   var app = document.getElementById('app');
-  var statusEl = document.getElementById('status');
-  var timelineEl = document.getElementById('timeline');
-  var loadMoreEl = document.getElementById('load-more');
-  var loadMoreButton = document.getElementById('load-more-button');
 
   var eventsPageEl = document.getElementById('events-page');
   var expertPageEl = document.getElementById('expert-page');
   // The 하드 table is fixed data, drawn without waiting for the sheet.
   ElephPage.mountHard(document.getElementById('hard-page'));
 
-  var events = [];
-  var fromT = null;
 
   // Follow the device color scheme.
   var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -54,26 +49,50 @@
     return from;
   }
 
-  function setStatus(text, retry) {
-    statusEl.hidden = !text;
-    statusEl.textContent = text || '';
-    if (retry) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.textContent = '다시 시도';
-      b.addEventListener('click', load);
-      statusEl.appendChild(document.createElement('br'));
-      statusEl.appendChild(b);
-    }
+  // One timeline page: its list, status line and "load earlier" button,
+  // with its own events and starting day.
+  function timelineView(suffix, route) {
+    var view = {
+      route: route,
+      statusEl: document.getElementById('status' + suffix),
+      timelineEl: document.getElementById('timeline' + suffix),
+      loadMoreEl: document.getElementById('load-more' + suffix),
+      events: [],
+      fromT: null
+    };
+    view.setStatus = function (text, retry) {
+      var el = view.statusEl;
+      el.hidden = !text;
+      el.textContent = text || '';
+      if (retry) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = '다시 시도';
+        b.addEventListener('click', load);
+        el.appendChild(document.createElement('br'));
+        el.appendChild(b);
+      }
+    };
+    view.render = function () {
+      var rows = Timeline.buildRows(view.events, view.fromT);
+      view.timelineEl.innerHTML = Timeline.rowsHtml(rows.rows);
+      Timeline.layout(view.timelineEl);
+      view.loadMoreEl.hidden = !rows.hasEarlier;
+      view.setStatus(rows.rows.length ? '' : '표시할 일정이 없습니다.');
+    };
+    view.show = function (events) {
+      view.events = events;
+      view.fromT = initialFrom(events, todayT());
+      view.render();
+    };
+    document.getElementById('load-more' + suffix + '-button').addEventListener('click', function () {
+      view.fromT -= PAGE_WEEKS * WEEK_MS;
+      view.render();
+    });
+    return view;
   }
-
-  function render() {
-    var view = Timeline.buildRows(events, fromT);
-    timelineEl.innerHTML = Timeline.rowsHtml(view.rows);
-    Timeline.layout(timelineEl);
-    loadMoreEl.hidden = !view.hasEarlier;
-    setStatus(view.rows.length ? '' : '표시할 일정이 없습니다.');
-  }
+  var views = [timelineView('', 'timeline'), timelineView('-jp', 'jp')];
+  var SERVERS = { timeline: 'kr', jp: 'jp' };
 
   function fetchText(gid) {
     return fetch(SHEET_BASE + gid).then(function (res) {
@@ -83,32 +102,32 @@
   }
 
   function load() {
-    setStatus('일정을 불러오는 중…');
-    loadMoreEl.hidden = true;
+    views.forEach(function (v) {
+      v.setStatus('일정을 불러오는 중…');
+      v.loadMoreEl.hidden = true;
+    });
     Promise.all([fetchText(SCHEDULE_GID), fetchText(SCHEMA_GID)]).then(function (texts) {
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
       var records = Adapter.csvToRecords(texts[0]);
       eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
       ElephPage.mount(expertPageEl, Adapter.expertStudents(records, schema),
         new Date(todayT()).toISOString().slice(0, 10));
-      events = Adapter.sheetRowsToEvents(records, schema, {
-        warn: function (msg) { console.warn('[timeline] ' + msg); }
+      views.forEach(function (v) {
+        v.show(Adapter.sheetRowsToEvents(records, schema, {
+          server: SERVERS[v.route],
+          warn: function (msg) { console.warn('[' + v.route + '] ' + msg); }
+        }));
       });
-      fromT = initialFrom(events, todayT());
-      render();
     }).catch(function (err) {
       console.error(err);
-      timelineEl.innerHTML = '';
+      views.forEach(function (v) {
+        v.timelineEl.innerHTML = '';
+        v.setStatus('일정을 불러오지 못했습니다.', true);
+      });
       eventsPageEl.innerHTML = '<p class="page-empty">이벤트를 불러오지 못했습니다.</p>';
       expertPageEl.innerHTML = '<p class="page-empty">학생 목록을 불러오지 못했습니다.</p>';
-      setStatus('일정을 불러오지 못했습니다.', true);
     });
   }
-
-  loadMoreButton.addEventListener('click', function () {
-    fromT -= PAGE_WEEKS * WEEK_MS;
-    render();
-  });
 
   // Note popover: clicking a note icon (.memo-btn) shows its row's 메모
   // below the icon (above it when there is no room); clicking elsewhere,
@@ -146,14 +165,15 @@
   window.addEventListener('scroll', closeMemo, true);
   window.addEventListener('resize', closeMemo);
 
-  window.addEventListener('resize', function () { Timeline.layout(timelineEl); });
-  // Layout needs the page to be visible; redo it when the timeline tab opens.
-  window.addEventListener('route', function (e) {
-    if (e.detail === 'timeline') Timeline.layout(timelineEl);
-  });
-  if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { Timeline.layout(timelineEl); });
+  function layoutAll() {
+    views.forEach(function (v) { Timeline.layout(v.timelineEl); });
   }
+  window.addEventListener('resize', layoutAll);
+  // Layout needs the page to be visible; redo it when a timeline tab opens.
+  window.addEventListener('route', function (e) {
+    views.forEach(function (v) { if (e.detail === v.route) Timeline.layout(v.timelineEl); });
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layoutAll);
 
   load();
 })();

@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>키보토스 타임라인</title>
 <link rel="stylesheet" crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;600;700;800&amp;display=swap">
-<link rel="stylesheet" href="styles.css?v=20261019181032">
+<link rel="stylesheet" href="styles.css?v=20261019184636">
 </head>
 <body>
 <div id="app" class="app theme-light">
 <nav class="site-tabs" aria-label="메뉴">
 <div class="site-tabs-in">
+<a href="#/jp" data-route="jp">일정표(JP)</a>
 <a href="#/timeline" data-route="timeline">일정표</a>
 <a href="#/eleph" data-route="eleph">조각작</a>
 <a href="#/events" data-route="events">이벤트</a>
@@ -26,6 +27,16 @@
 <p class="status" id="status" role="status">일정을 불러오는 중…</p>
 <ol class="timeline" id="timeline" aria-label="이벤트 타임라인"></ol>
 </main>
+<main class="m-page" data-page="jp" hidden>
+<div class="load-more" id="load-more-jp" hidden>
+<button type="button" id="load-more-jp-button">
+<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+이전 일정 불러오기
+</button>
+</div>
+<p class="status" id="status-jp" role="status">일정을 불러오는 중…</p>
+<ol class="timeline" id="timeline-jp" aria-label="일본 서버 이벤트 타임라인"></ol>
+</main>
 <main class="m-page" data-page="eleph" hidden>
 <nav class="sub-tabs" aria-label="조각작 메뉴">
 <a href="#/eleph/expert" data-subroute="expert">숙련 증서</a>
@@ -40,11 +51,11 @@
 <div id="events-page"><p class="page-empty">이벤트를 불러오는 중…</p></div>
 </main>
 </div>
-<script src="js/nav.js?v=20261019181032"></script>
-<script src="js/adapter.js?v=20261019181032"></script>
-<script src="js/render.js?v=20261019181032"></script>
-<script src="js/events.js?v=20261019181032"></script>
-<script src="js/eleph.js?v=20261019181032"></script>
-<script src="js/app.js?v=20261019181032"></script>
+<script src="js/nav.js?v=20261019184636"></script>
+<script src="js/adapter.js?v=20261019184636"></script>
+<script src="js/render.js?v=20261019184636"></script>
+<script src="js/events.js?v=20261019184636"></script>
+<script src="js/eleph.js?v=20261019184636"></script>
+<script src="js/app.js?v=20261019184636"></script>
 </body>
 </html>

@@ -603,3 +603,17 @@ test('rows with a 메모 get a note button after their entry', () => {
   assert.equal((html.match(/memo-btn/g) || []).length, 8);
   function cardTitleEnd() { return '~기적의 한 장~</span></span>'; }
 });
+
+test('the JP server option reads the JP date columns', () => {
+  const csv = [HEADER,
+    ',,2026-06-10,2026-06-24,14,2026-09-29,2026-10-13,14,이벤트,테스트,신규,,,',
+    ',,2026-06-10,2026-06-17,7,2026-09-29,2026-10-06,7,총력전,비나,야외,중장갑,,'].join('\n');
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(SCHEMA_CSV));
+  const recs = Adapter.csvToRecords(csv);
+  const kr = Adapter.sheetRowsToEvents(recs, schema);
+  const jp = Adapter.sheetRowsToEvents(recs, schema, { server: 'jp' });
+  assert.equal(kr[0].start, '2026-09-29');
+  assert.equal(jp[0].start, '2026-06-10');
+  assert.equal(jp[0].end, '2026-06-23');
+  assert.equal(jp[0].weeks[0].battles[0].boss, '비나');
+});
