@@ -209,9 +209,18 @@ test('group story lines show the episode range', () => {
     '2021-07-29,,,,,,그룹스토리,수행부,3-4,,,'
   ]);
   assert.deepEqual(convert(csv, schema)[0].fullSubs, [
-    { label: '그룹스토리', text: '「선도부」 2화' },
-    { label: '그룹스토리', text: '「수행부」 3-4화' }
+    { label: '그룹스토리', text: '「선도부」', episodes: '2' },
+    { label: '그룹스토리', text: '「수행부」', episodes: '3-4' }
   ]);
+});
+
+test('mini story lines show the episode range muted after the title', () => {
+  const schema = SCHEMA_CSV.replace('미니스토리,제목,,,,', '미니스토리,제목,화수,,,');
+  const csv = scheduleCsv(['2026-10-27,,,,,,미니스토리,약사의 방황길,1-4,,,']);
+  const events = convert(csv, schema);
+  assert.deepEqual(events[0].fullSubs, [{ label: '미니스토리', text: '「약사의 방황길」', episodes: '1-4' }]);
+  const html = Timeline.rowsHtml(Timeline.buildRows(events).rows);
+  assert.match(html, /<span class="">「약사의 방황길」 <span class="sub-ep">1-4화<\/span><\/span>/);
 });
 
 test('dates in display formats are normalized', () => {
@@ -324,6 +333,18 @@ test('event cards show the distributed student when the sheet names one', () => 
   const html = Timeline.rowsHtml(Timeline.buildRows(events, null).rows);
   assert.match(html, /<span class="tag">배포<\/span><span class="battle-name">하루카\(새해\)<\/span>/);
   assert.equal((html.match(/>배포</g) || []).length, 1);
+});
+
+test('tactical exam lines show their armor badge', () => {
+  const schema = SCHEMA_CSV.replace('종합전술시험,사격/돌파/방어/호위,,,,', '종합전술시험,사격/돌파/방어/호위,지형,방어타입,,');
+  const csv = scheduleCsv([
+    '2026-08-12,2026-08-26,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-12,2026-08-19,7,,,,종합전술시험,사격시험,시가지,특수장갑,,'
+  ]);
+  const events = convert(csv, schema);
+  assert.deepEqual(events[0].weeks[0].battles, [{ type: 'tactical', boss: '사격시험', terrain: '시가지', armor: ['special'] }]);
+  const html = Timeline.rowsHtml(Timeline.buildRows(events).rows);
+  assert.match(html, /사격시험\(시가지\)<\/span><span class="armors"><span class="armor-group"><span class="armor armor-special" title="특수장갑"/);
 });
 
 test('battle and raid names carry their terrain in parentheses', () => {

@@ -19,7 +19,8 @@
     var text = typeof v === 'object' && v ? v.text : v;
     var label = typeof v === 'object' && v ? (v.label || '') : '';
     var memo = typeof v === 'object' && v ? (v.memo || '') : '';
-    return { text: text, label: label, cls: isPlaceholder(text) ? 'ph' : '', memo: memo };
+    var episodes = typeof v === 'object' && v ? (v.episodes || '') : '';
+    return { text: text, label: label, cls: isPlaceholder(text) ? 'ph' : '', memo: memo, episodes: episodes };
   }
 
   var PICKUP_KIND = { 'new': '신규', rerun: '복각' };
@@ -316,7 +317,9 @@
   function subsHtml(list) {
     return list.map(function (s) {
       return '<p class="sub">' + (s.label ? '<span class="sub-label' + (s.label === '3배' ? ' sub-label-x3' : '') + '">' + esc(s.label) + '</span>' : '') +
-        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) + '</span>' + memoHtml(s.memo) + '</p>';
+        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) +
+        (s.episodes ? ' <span class="sub-ep">' + esc(s.episodes) + '화</span>' : '') + '</span>' +
+        memoHtml(s.memo) + '</p>';
     }).join('');
   }
 

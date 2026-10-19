@@ -237,7 +237,7 @@
           armor: armorList(r.get('방어타입')) });
       } else if (r.type === '종합전술시험') {
         placeOrGap(r, 'battles', { type: 'tactical', boss: r.get('사격/돌파/방어/호위'),
-          terrain: r.get('지형'), armor: [] });
+          terrain: r.get('지형'), armor: armorList(r.get('방어타입')) });
       } else if (r.type === '대결전') {
         placeOrGap(r, 'battles', { type: 'grand', boss: r.get('보스'), terrain: r.get('지형'),
           armor: [armorList(r.get('상위방어타입')), armorList(r.get('하위방어타입'))] });
@@ -344,11 +344,14 @@
   function subText(r) {
     switch (r.type) {
       case '캠페인': return campaignItems(r) ? line(r.get('2배/3배'), campaignItems(r)) : '';
-      case '미니스토리': return r.get('제목') ? line('미니스토리', '「' + r.get('제목') + '」') : '';
+      // Story lines carry their episode range (shown muted after the title);
+      // group stories repeat names across releases and are told apart by it.
+      case '미니스토리':
       case '그룹스토리': {
-        // Group stories repeat names across releases; the episode range tells them apart.
-        var ep = r.get('화수');
-        return r.get('제목') ? line('그룹스토리', '「' + r.get('제목') + '」' + (ep ? ' ' + ep + '화' : '')) : '';
+        if (!r.get('제목')) return '';
+        var story = line(r.type, '「' + r.get('제목') + '」');
+        if (r.get('화수')) story.episodes = r.get('화수');
+        return story;
       }
       case '이벤트(상설)': return line('상설 이벤트', r.get('이벤트명'));
       case '이벤트': return r.get('신규/복각') === '상설' ? line('상설 이벤트', r.get('제목')) : '';

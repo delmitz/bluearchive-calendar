@@ -254,6 +254,7 @@ body{margin:0}
 .sub-label{flex:none;font-size:12px;font-weight:700;color:var(--sub-ink)}
 .sub > span:last-child{min-width:0}
 .sub-label-x3{color:var(--rate-x3)}
+.sub-ep{font-size:12.5px;font-weight:500;color:var(--ink-soft);opacity:.8;white-space:nowrap}
 .sub-when{font-size:12px;font-weight:500;color:var(--ink-soft);opacity:.75}
 .story .sub,.story-tail .sub{--sub-dot:var(--story);--sub-ink:var(--story-ink)}
 .week{display:flex;flex-direction:column;gap:4px;padding:8px 16px;margin:0 0 6px 14px;border:1px solid var(--zone-line);border-right:none;border-radius:9px 0 0 9px}
