@@ -731,7 +731,9 @@
       }).join('') + '</table>');
   }
 
-  // progress: the 하드 store. Fully grown students (전4) are greyed out, and an
+  // progress: the 하드 store. Cells are tinted by the student's initial star
+  // rating (★1 blue, ★2 yellow, ★3 purple). Fully grown students (전4) are
+  // greyed out with a fainter tint, and an
   // area whose three students are all fully grown is left out unless showAll;
   // a checkbox above the table switches that.
   function hardHtml(progress, showAll) {
@@ -744,7 +746,8 @@
       HARD_STAGES.map(function (area, i) {
         if (!showAll && area.every(done)) return '';
         return '<tr><th scope="row">' + (i + 1) + '</th>' + area.map(function (name) {
-          return '<td data-name="' + esc(name) + '"' + (done(name) ? ' class="is-done"' : '') + '>' + esc(name) + '</td>';
+          return '<td data-name="' + esc(name) + '" class="hd-rare hd-r' + (HARD_RARITY[name] || 3) +
+            (done(name) ? ' is-done' : '') + '">' + esc(name) + '</td>';
         }).join('') + '</tr>';
       }).join('') + '</tbody></table>';
   }

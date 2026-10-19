@@ -468,8 +468,8 @@ test('hard table lists three stage students for each of the 30 areas', () => {
   const ElephPage = require('../js/eleph.js');
   const html = ElephPage.hardHtml();
   assert.equal((html.match(/<tr><th scope="row">/g) || []).length, 30);
-  assert.match(html, /<tr><th scope="row">1<\/th><td data-name="유우카">유우카<\/td><td data-name="스즈미">스즈미<\/td><td data-name="세리카">세리카<\/td><\/tr>/);
-  assert.match(html, /<tr><th scope="row">30<\/th><td data-name="피나">피나<\/td><td data-name="모미지">모미지<\/td><td data-name="체리노">체리노<\/td><\/tr>/);
+  assert.match(html, /<tr><th scope="row">1<\/th><td data-name="유우카" class="hd-rare hd-r2">유우카<\/td><td data-name="스즈미" class="hd-rare hd-r1">스즈미<\/td><td data-name="세리카" class="hd-rare hd-r2">세리카<\/td><\/tr>/);
+  assert.match(html, /<tr><th scope="row">30<\/th><td data-name="피나" class="hd-rare hd-r1">피나<\/td><td data-name="모미지" class="hd-rare hd-r2">모미지<\/td><td data-name="체리노" class="hd-rare hd-r3">체리노<\/td><\/tr>/);
 });
 
 test('hard progress bars all start at 1성', () => {
@@ -504,11 +504,12 @@ test('hard table greys fully grown students and hides fully grown areas', () => 
   const progress = { '유우카': done, '스즈미': done, '세리카': done, '코토리': done };
   const html = ElephPage.hardHtml(progress);
   assert.doesNotMatch(html, /<th scope="row">1<\/th>/);
-  assert.match(html, /<tr><th scope="row">2<\/th><td data-name="코토리" class="is-done">코토리<\/td><td data-name="아카리">/);
-  assert.match(html, /<td data-name="유우카" class="is-done">유우카<\/td>/);
+  assert.match(html, /<tr><th scope="row">2<\/th><td data-name="코토리" class="hd-rare hd-r1 is-done">코토리<\/td><td data-name="아카리" class="hd-rare hd-r2">/);
+  assert.match(html, /<td data-name="유우카" class="hd-rare hd-r2 is-done">유우카<\/td>/);
+  assert.match(html, /<td data-name="시로코" class="hd-rare hd-r3">시로코<\/td>/);
   assert.match(html, /<input type="checkbox" data-act="show-all"> 모두 보기<\/label>/);
   const all = ElephPage.hardHtml(progress, true);
-  assert.match(all, /<tr><th scope="row">1<\/th><td data-name="유우카" class="is-done">/);
+  assert.match(all, /<tr><th scope="row">1<\/th><td data-name="유우카" class="hd-rare hd-r2 is-done">/);
   assert.match(all, /data-act="show-all" checked>/);
   assert.equal((ElephPage.hardHtml().match(/<tr><th scope="row">/g) || []).length, 30);
 });
