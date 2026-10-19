@@ -166,13 +166,13 @@
     var out = [];
     var cards = [];
 
-    function newCard(type, start, sheetEnd, name) {
+    function newCard(type, start, sheetEnd, name, r) {
       var card = {
         type: type, start: start, end: inclusiveEnd(sheetEnd), name: name,
         _t: parseDay(start), _endT: parseDay(sheetEnd)
       };
       cards.push(card);
-      out.push(card);
+      out.push(fromRow(card, r));
       return card;
     }
 
@@ -182,19 +182,19 @@
         if (r.get('신규/복각') === '상설') return;  // permanent: a text line (pass 3)
         if (!r.end) { warn('Event without an end date skipped: ' + r.get('제목')); return; }
         var kind = EVENT_KIND[r.get('신규/복각')] || 'new';
-        var card = newCard(kind, r.start, r.end, r.get('제목'));
+        var card = newCard(kind, r.start, r.end, r.get('제목'), r);
         // The one student given out by the event, when the sheet names one.
         if (r.get('배포캐릭터')) card.welfare = r.get('배포캐릭터');
         withMemo(card, r);
       } else if (r.type === '메인스토리') {
         var ep = r.get('화수');
-        out.push(withMemo(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
-          : { type: 'story', start: r.start, name: r.get('제목') }, r));
+        out.push(fromRow(withMemo(ep ? { type: 'story', start: r.start, name: r.get('제목'), episodes: ep }
+          : { type: 'story', start: r.start, name: r.get('제목') }, r), r));
       } else if (r.type === '제약해제결전') {
         if (!r.end) return;
         // Raids open the day before the date written in the sheet.
-        out.push(withMemo({ type: 'raid', start: iso(r.t - DAY_MS), end: inclusiveEnd(r.end),
-          name: r.get('보스'), terrain: r.get('지형'), armor: armorList(r.get('방어타입')) }, r));
+        out.push(fromRow(withMemo({ type: 'raid', start: iso(r.t - DAY_MS), end: inclusiveEnd(r.end),
+          name: r.get('보스'), terrain: r.get('지형'), armor: armorList(r.get('방어타입')) }, r), r));
       }
     });
 
@@ -223,7 +223,7 @@
         if (!r.end) return;
         var gapKey = r.start + '|' + r.end;
         card = cards.filter(function (c) { return c._gapKey === gapKey; })[0];
-        if (!card) { card = newCard('gap', r.start, r.end, ''); card._gapKey = gapKey; }
+        if (!card) { card = newCard('gap', r.start, r.end, '', r); card._gapKey = gapKey; }
       }
       push(slot(card, r), key, value);
     }
@@ -260,7 +260,7 @@
       var target, key;
       if (!r.end) {
         target = out.filter(function (e) { return e.type === 'story' && e.start === r.start; })[0];
-        if (!target) { target = { type: 'story', start: r.start, name: '' }; out.push(target); }
+        if (!target) { target = fromRow({ type: 'story', start: r.start, name: '' }, r); out.push(target); }
         key = 'fullSubs';
       } else {
         var card = findCard(r);
@@ -290,6 +290,20 @@
       delete e._t; delete e._endT; delete e._gapKey;
     });
     return out;
+  }
+
+  // Records which sheet row (index into records) an event was made from, as
+  // a hidden property so it stays out of comparisons and JSON. The JP page
+  // uses it to start at the same events as the KR page.
+  function fromRow(obj, r) {
+    Object.defineProperty(obj, 'row', { value: r.order, enumerable: false });
+    return obj;
+  }
+
+  // Start day (YYYY-MM-DD, or '') of a sheet record on a server ('jp' or KR).
+  function startDay(rec, server) {
+    var day = normDay(rec[(server === 'jp' ? JP_DATES : COL).start]);
+    return isDay(day) ? day : '';
   }
 
   // Sets the row's 메모 (free note) on the displayed object, when it has one.
@@ -379,7 +393,8 @@
   // (상설) and the distributed student (배포캐릭터, from any of its rows),
   // newest first-run first. Titles without a first-run row sort by their
   // earliest date.
-  function eventHistory(records, schema) {
+  // server: 'jp' uses the JP start dates instead of the KR ones.
+  function eventHistory(records, schema, server) {
     var map = schema['이벤트'];
     if (!map) return [];
     var titleCol = column(map, '제목'), kindCol = column(map, '신규/복각');
@@ -389,7 +404,7 @@
     var list = [];
     records.forEach(function (rec) {
       if (rec[COL.type] !== '이벤트') return;
-      var name = rec[titleCol], start = normDay(rec[COL.start]);
+      var name = rec[titleCol], start = startDay(rec, server);
       if (!name || !start) return;
       var e = byName[name];
       if (!e) { e = byName[name] = { name: name, first: '', reruns: [], permanent: '', welfare: '' }; list.push(e); }
@@ -495,6 +510,7 @@
     csvToRecords: csvToRecords,
     buildSchema: buildSchema,
     sheetRowsToEvents: sheetRowsToEvents,
+    startDay: startDay,
     eventHistory: eventHistory,
     studentLists: studentLists,
     expertStudents: expertStudents

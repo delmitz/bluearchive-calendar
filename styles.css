@@ -181,6 +181,8 @@ body{margin:0}
 [data-subpage][hidden]{display:none}
 .page-empty{margin:48px 0;text-align:center;font-size:14px;font-weight:600;color:var(--ink-soft)}
 /* Events page: title column wraps, date columns stay narrow. */
+.ev-server{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;user-select:none}
+.ev-server input{margin:0;accent-color:var(--accent)}
 .ev-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--card-line);border-radius:14px;overflow:hidden;font-size:14px}
 .ev-table th,.ev-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .ev-table tbody tr:last-child > *{border-bottom:none}

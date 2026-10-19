@@ -307,6 +307,19 @@ test('event history lists first run, reruns and permanent dates, newest first', 
   assert.match(html, /<span class="ev-welfare"><span class="ev-welfare-label">배포<\/span>하루카\(새해\)<\/span>/);
 });
 
+test('event history can use JP dates; the page has a JP checkbox', () => {
+  const EventsPage = require('../js/events.js');
+  const csv = [HEADER,
+    ',,2026-01-06,2026-01-20,14,2026-05-05,2026-05-19,14,이벤트,A,신규,,,',
+    ',,2026-03-03,2026-03-17,14,2026-04-07,2026-04-21,14,이벤트,B,신규,,,'].join('\n');
+  const schema = Adapter.buildSchema(Adapter.csvToRecords(SCHEMA_CSV));
+  const recs = Adapter.csvToRecords(csv);
+  assert.deepEqual(Adapter.eventHistory(recs, schema).map((e) => [e.name, e.first]), [['A', '2026-05-05'], ['B', '2026-04-07']]);
+  assert.deepEqual(Adapter.eventHistory(recs, schema, 'jp').map((e) => [e.name, e.first]), [['B', '2026-03-03'], ['A', '2026-01-06']]);
+  assert.match(EventsPage.html([]), /^<label class="ev-server"><input type="checkbox" data-act="ev-jp"> 일본서버 날짜로 보기<\/label>/);
+  assert.match(EventsPage.html([], true), /data-act="ev-jp" checked>/);
+});
+
 test('event titles split off a ~subtitle~', () => {
   const EventsPage = require('../js/events.js');
   assert.deepEqual(Timeline.splitTitle('팬데믹 해저드 ~기적의 팬케이크~'), { main: '팬데믹 해저드', sub: '기적의 팬케이크' });
@@ -616,4 +629,10 @@ test('the JP server option reads the JP date columns', () => {
   assert.equal(jp[0].start, '2026-06-10');
   assert.equal(jp[0].end, '2026-06-23');
   assert.equal(jp[0].weeks[0].battles[0].boss, '비나');
+  // Each event remembers its sheet row (hidden), so the JP page can find
+  // the JP start of the events the KR page starts with.
+  assert.equal(kr[0].row, 0);
+  assert.ok(!Object.keys(kr[0]).includes('row'));
+  assert.equal(Adapter.startDay(recs[kr[0].row], 'jp'), '2026-06-10');
+  assert.equal(Adapter.startDay(recs[0]), '2026-09-29');
 });

@@ -80,9 +80,10 @@
       view.loadMoreEl.hidden = !rows.hasEarlier;
       view.setStatus(rows.rows.length ? '' : '표시할 일정이 없습니다.');
     };
-    view.show = function (events) {
+    // fromT: first day to show; by default the start of the events running today.
+    view.show = function (events, fromT) {
       view.events = events;
-      view.fromT = initialFrom(events, todayT());
+      view.fromT = fromT != null ? fromT : initialFrom(events, todayT());
       view.render();
     };
     document.getElementById('load-more' + suffix + '-button').addEventListener('click', function () {
@@ -91,8 +92,34 @@
     });
     return view;
   }
-  var views = [timelineView('', 'timeline'), timelineView('-jp', 'jp')];
-  var SERVERS = { timeline: 'kr', jp: 'jp' };
+  var krView = timelineView('', 'timeline');
+  var jpView = timelineView('-jp', 'jp');
+  var views = [krView, jpView];
+
+  // Events page; the checkbox above the table switches to JP server dates
+  // (not saved, KR again on reload).
+  var eventsJp = false;
+  function showEvents(records, schema) {
+    eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema, eventsJp ? 'jp' : 'kr'), eventsJp);
+    eventsPageEl.onchange = function (e) {
+      if (!e.target.matches('[data-act="ev-jp"]')) return;
+      eventsJp = e.target.checked;
+      showEvents(records, schema);
+    };
+  }
+
+  // The JP page starts where the KR page does: at the JP start of the events
+  // on the KR page's first day (null when none of them has a JP date).
+  function jpFromKr(krEvents, krFrom, records) {
+    var shown = krEvents.filter(function (e) { return Timeline.parseDay(e.start) >= krFrom; });
+    if (!shown.length) return null;
+    var first = Math.min.apply(null, shown.map(function (e) { return Timeline.parseDay(e.start); }));
+    var days = shown.filter(function (e) { return Timeline.parseDay(e.start) === first && e.row != null; })
+      .map(function (e) { return Adapter.startDay(records[e.row], 'jp'); })
+      .filter(Boolean)
+      .map(Timeline.parseDay);
+    return days.length ? Math.min.apply(null, days) : null;
+  }
 
   function fetchText(gid) {
     return fetch(SHEET_BASE + gid).then(function (res) {
@@ -109,15 +136,17 @@
     Promise.all([fetchText(SCHEDULE_GID), fetchText(SCHEMA_GID)]).then(function (texts) {
       var schema = Adapter.buildSchema(Adapter.csvToRecords(texts[1]));
       var records = Adapter.csvToRecords(texts[0]);
-      eventsPageEl.innerHTML = EventsPage.html(Adapter.eventHistory(records, schema));
+      showEvents(records, schema);
       ElephPage.mount(expertPageEl, Adapter.expertStudents(records, schema),
         new Date(todayT()).toISOString().slice(0, 10));
-      views.forEach(function (v) {
-        v.show(Adapter.sheetRowsToEvents(records, schema, {
-          server: SERVERS[v.route],
-          warn: function (msg) { console.warn('[' + v.route + '] ' + msg); }
-        }));
-      });
+      function convert(server) {
+        return Adapter.sheetRowsToEvents(records, schema, {
+          server: server,
+          warn: function (msg) { console.warn('[' + server + '] ' + msg); }
+        });
+      }
+      krView.show(convert('kr'));
+      jpView.show(convert('jp'), jpFromKr(krView.events, krView.fromT, records));
     }).catch(function (err) {
       console.error(err);
       views.forEach(function (v) {

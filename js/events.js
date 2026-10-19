@@ -1,5 +1,6 @@
-// Events page: a table of event titles with the KR dates of their first run
+// Events page: a table of event titles with the dates of their first run
 // (신규), reruns (복각) and permanent release (상설), newest first-run on top.
+// A checkbox above the table switches between KR and JP server dates.
 (function (root) {
   'use strict';
 
@@ -34,10 +35,13 @@
     return '<td class="ev-date">' + days.map(dayHtml).join('') + '</td>';
   }
 
-  // list: Adapter.eventHistory() output.
-  function html(list) {
-    if (!list.length) return '<p class="page-empty">표시할 이벤트가 없습니다.</p>';
-    return '<table class="ev-table"><thead><tr>' +
+  // list: Adapter.eventHistory() output. jp: the list uses JP server dates
+  // (the checkbox is shown checked).
+  function html(list, jp) {
+    var toggle = '<label class="ev-server"><input type="checkbox" data-act="ev-jp"' + (jp ? ' checked' : '') +
+      '> 일본서버 날짜로 보기</label>';
+    if (!list.length) return toggle + '<p class="page-empty">표시할 이벤트가 없습니다.</p>';
+    return toggle + '<table class="ev-table"><thead><tr>' +
       '<th scope="col" class="ev-name-col">이벤트</th>' +
       '<th scope="col">신규</th><th scope="col">복각</th><th scope="col">상설</th>' +
       '</tr></thead><tbody>' + list.map(function (e) {
