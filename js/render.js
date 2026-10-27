@@ -317,7 +317,7 @@
   function subsHtml(list) {
     return list.map(function (s) {
       return '<p class="sub">' + (s.label ? '<span class="sub-label' + (s.label === '3배' ? ' sub-label-x3' : '') + '">' + esc(s.label) + '</span>' : '') +
-        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)) +
+        '<span class="' + s.cls + '">' + whenHtml(esc(s.text)).replace(/\n/g, '<br>') +
         (s.episodes ? ' <span class="sub-ep">' + esc(s.episodes) + '화</span>' : '') + '</span>' +
         memoHtml(s.memo) + '</p>';
     }).join('');

@@ -35,8 +35,7 @@ const EXAMPLE = scheduleCsv([
   '2026-08-19,2026-08-26,7,,,,대결전,비나,야외전,"경장갑, 중장갑",탄력장갑,',
   '2026-08-19,,,,,,미니스토리,이부키 가출 사건,,,,',
   '2026-08-19,,,,,,메인스토리,2부 Vol.1 「불꽃과 그림자」편 2장 「불꽃이 되는 우리」,,,,',
-  '2026-07-30,2026-08-26,27,,,,제약해제결전,세트,야외전,경장갑,,',
-  '2026-08-12,2026-09-23,42,,,,패키지판매,AP 패키지(7일),,,,'
+  '2026-07-30,2026-08-26,27,,,,제약해제결전,세트,야외전,경장갑,,'
 ]);
 
 function convert(csv, schemaCsv = SCHEMA_CSV, warnings = []) {
@@ -635,4 +634,22 @@ test('the JP server option reads the JP date columns', () => {
   assert.ok(!Object.keys(kr[0]).includes('row'));
   assert.equal(Adapter.startDay(recs[kr[0].row], 'jp'), '2026-06-10');
   assert.equal(Adapter.startDay(recs[0]), '2026-09-29');
+});
+
+test('package sales show on their start day like updates, one line per day', () => {
+  const csv = scheduleCsv([
+    '2026-08-12,2026-08-26,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-12,2026-09-23,42,,,,패키지판매,AP 패키지(7일),,,,',
+    '2026-08-12,2026-09-09,28,,,,패키지판매,선물 패키지,,,,',
+    '2026-08-19,,,,,,패키지판매,STEP UP 패키지,,,,'
+  ]);
+  const events = convert(csv);
+  const stories = events.filter((e) => e.type === 'story');
+  assert.deepEqual(stories.map((e) => [e.start, e.fullSubs]), [
+    ['2026-08-12', [{ label: '패키지판매', text: 'AP 패키지(7일)\n선물 패키지' }]],
+    ['2026-08-19', [{ label: '패키지판매', text: 'STEP UP 패키지' }]]
+  ]);
+  assert.equal(events.find((e) => e.type === 'new').fullSubs, undefined);
+  assert.match(Timeline.rowsHtml(Timeline.buildRows(events).rows),
+    /<span class="sub-label">패키지판매<\/span><span class="">AP 패키지\(7일\)<br>선물 패키지<\/span>/);
 });

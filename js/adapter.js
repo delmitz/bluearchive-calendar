@@ -34,12 +34,16 @@
     '상점': ['대상 상점', '캐릭터 목록'],
     '이벤트(상설)': ['이벤트명'],
     '업데이트': ['내용'],
+    '패키지판매': ['패키지명'],
     '애용품': ['캐릭터1']
   };
   // Campaign items for account experience (KR official: 계정 경험치).
   var EXP_ITEMS = { '계정 경험치': true, '경험치': true };
   // Types intentionally not shown on the timeline.
-  var HIDDEN_TYPES = { '패키지판매': true };
+  var HIDDEN_TYPES = {};
+  // Text lines shown on their start day like updates, even when the row has
+  // an end date (package sales run for weeks but matter when they start).
+  var START_DAY_TYPES = { '패키지판매': true };
 
   // RFC 4180 CSV parser: quoted fields, escaped quotes, CRLF, no trailing newline.
   function parseCSV(text) {
@@ -254,11 +258,12 @@
     // Rate campaigns (2배, 3배, ...) of the same rate in the same list share
     // one line; campaigns without a rate keep their own line.
     var campaigns = [];
+    var packageLines = {};
     rows.forEach(function (r) {
       var text = subText(r);
       if (!text) return;
       var target, key;
-      if (!r.end) {
+      if (!r.end || START_DAY_TYPES[r.type]) {
         target = out.filter(function (e) { return e.type === 'story' && e.start === r.start; })[0];
         if (!target) { target = fromRow({ type: 'story', start: r.start, name: '' }, r); out.push(target); }
         key = 'fullSubs';
@@ -269,6 +274,18 @@
         key = target === card ? 'fullSubs' : 'subs';
       }
       var list = target[key] = target[key] || [];
+      // Packages of the same day share one entry (one label), one package per line.
+      if (r.type === '패키지판매') {
+        var pl = packageLines[r.start];
+        if (pl) {
+          pl.text += '\n' + text.text;
+          if (r.memo) pl.memo = pl.memo ? pl.memo + '\n' + r.memo : r.memo;
+        } else {
+          packageLines[r.start] = withMemo(text, r);
+          list.push(text);
+        }
+        return;
+      }
       if (r.type === '캠페인' && r.get('2배/3배')) {
         var rate = r.get('2배/3배');
         // Experience campaigns always get their own line, below the others.
@@ -378,6 +395,7 @@
         return line('애용품', names.join(' · '));
       }
       case '업데이트': return line('업데이트', r.get('내용'));
+      case '패키지판매': return line('패키지판매', r.get('패키지명'));
       case '가이드미션': return line('가이드미션', r.get('제목'));
       case '기한 만료': return line('기한 만료', r.get('내용'));
       // Students whose elephs were added to a shop: "숙련 증서 상점" + list.
