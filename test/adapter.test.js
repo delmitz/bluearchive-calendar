@@ -653,3 +653,30 @@ test('package sales show on their start day like updates, one line per day', () 
   assert.match(Timeline.rowsHtml(Timeline.buildRows(events).rows),
     /<span class="sub-label">패키지판매<\/span><span class="">AP 패키지\(7일\)<br>선물 패키지<\/span>/);
 });
+
+test('update lines carry their sub category in the label', () => {
+  const schema = SCHEMA_CSV + '\n업데이트,소분류,내용,,,';
+  const csv = scheduleCsv([
+    '2026-10-28,,,,,,업데이트,신규 콘텐츠,동행 실습,,,',
+    '2026-10-28,,,,,,업데이트,기능,"총력전 버저비터, 모집 기록",,,',
+    '2026-10-28,,,,,,업데이트,,기타 개선,,,'
+  ]);
+  assert.deepEqual(convert(csv, schema)[0].fullSubs, [
+    { label: '업데이트 (신규 콘텐츠)', text: '동행 실습' },
+    { label: '업데이트 (기능)', text: '총력전 버저비터, 모집 기록' },
+    { label: '업데이트', text: '기타 개선' }
+  ]);
+});
+
+test('expiry rows of one day share one label, one row per line', () => {
+  const schema = SCHEMA_CSV + '\n기한 만료,내용,,,,';
+  const csv = scheduleCsv([
+    '2026-08-05,,,,,,기한 만료,재화 A,,,,',
+    '2026-08-05,,,,,,기한 만료,재화 B,,,,',
+    '2026-08-12,,,,,,기한 만료,재화 C,,,,'
+  ]);
+  assert.deepEqual(convert(csv, schema).map((e) => [e.start, e.fullSubs]), [
+    ['2026-08-05', [{ label: '기한 만료', text: '재화 A\n재화 B' }]],
+    ['2026-08-12', [{ label: '기한 만료', text: '재화 C' }]]
+  ]);
+});

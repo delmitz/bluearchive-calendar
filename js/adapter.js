@@ -44,6 +44,8 @@
   // Text lines shown on their start day like updates, even when the row has
   // an end date (package sales run for weeks but matter when they start).
   var START_DAY_TYPES = { '패키지판매': true };
+  // Text lines whose rows of one day share one entry (one label), one row per line.
+  var STACKED_TYPES = { '패키지판매': true, '기한 만료': true };
 
   // RFC 4180 CSV parser: quoted fields, escaped quotes, CRLF, no trailing newline.
   function parseCSV(text) {
@@ -258,7 +260,7 @@
     // Rate campaigns (2배, 3배, ...) of the same rate in the same list share
     // one line; campaigns without a rate keep their own line.
     var campaigns = [];
-    var packageLines = {};
+    var stacked = [];
     rows.forEach(function (r) {
       var text = subText(r);
       if (!text) return;
@@ -274,14 +276,13 @@
         key = target === card ? 'fullSubs' : 'subs';
       }
       var list = target[key] = target[key] || [];
-      // Packages of the same day share one entry (one label), one package per line.
-      if (r.type === '패키지판매') {
-        var pl = packageLines[r.start];
-        if (pl) {
-          pl.text += '\n' + text.text;
-          if (r.memo) pl.memo = pl.memo ? pl.memo + '\n' + r.memo : r.memo;
+      if (STACKED_TYPES[r.type]) {
+        var st = stacked.filter(function (x) { return x.list === list && x.type === r.type; })[0];
+        if (st) {
+          st.line.text += '\n' + text.text;
+          if (r.memo) st.line.memo = st.line.memo ? st.line.memo + '\n' + r.memo : r.memo;
         } else {
-          packageLines[r.start] = withMemo(text, r);
+          stacked.push({ list: list, type: r.type, line: withMemo(text, r) });
           list.push(text);
         }
         return;
@@ -394,7 +395,8 @@
         var names = [1, 2, 3, 4, 5].map(function (i) { return r.get('캐릭터' + i); }).filter(Boolean);
         return line('애용품', names.join(' · '));
       }
-      case '업데이트': return line('업데이트', r.get('내용'));
+      // The sub category tells apart several updates of one day.
+      case '업데이트': return line(r.get('소분류') ? '업데이트 (' + r.get('소분류') + ')' : '업데이트', r.get('내용'));
       case '패키지판매': return line('패키지판매', r.get('패키지명'));
       case '가이드미션': return line('가이드미션', r.get('제목'));
       case '기한 만료': return line('기한 만료', r.get('내용'));
