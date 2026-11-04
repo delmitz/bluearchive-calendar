@@ -288,6 +288,8 @@ body{margin:0}
    next to a title that may wrap it stays on the first line. */
 .memo-btn{position:relative;top:-1.5px}
 .title-row .memo-btn{align-self:flex-start;margin-top:4px}
+/* Inside a line of text (stacked package rows) there is no flex gap to offset. */
+.sub span .memo-btn{margin-left:3px}
 .memo-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
 .memo-btn:hover,.memo-btn[aria-expanded="true"]{background:var(--accent-soft);color:var(--accent-strong)}
 .memo-pop{position:fixed;z-index:50;box-sizing:border-box;max-width:min(320px,calc(100vw - 16px));padding:10px 12px;border:1px solid var(--card-line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:13px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 6px 20px rgba(15,33,51,.18)}

@@ -276,13 +276,16 @@
         key = target === card ? 'fullSubs' : 'subs';
       }
       var list = target[key] = target[key] || [];
+      // Each stacked row keeps its own memo (items), shown after its own line.
       if (STACKED_TYPES[r.type]) {
+        var item = withMemo({ text: text.text }, r);
         var st = stacked.filter(function (x) { return x.list === list && x.type === r.type; })[0];
         if (st) {
-          st.line.text += '\n' + text.text;
-          if (r.memo) st.line.memo = st.line.memo ? st.line.memo + '\n' + r.memo : r.memo;
+          st.line.text += '\n' + item.text;
+          st.line.items.push(item);
         } else {
-          stacked.push({ list: list, type: r.type, line: withMemo(text, r) });
+          text.items = [item];
+          stacked.push({ list: list, type: r.type, line: text });
           list.push(text);
         }
         return;

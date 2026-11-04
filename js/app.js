@@ -172,7 +172,8 @@
     var el = document.createElement('div');
     el.className = 'memo-pop';
     el.setAttribute('role', 'note');
-    el.textContent = btn.getAttribute('data-memo');
+    // The sheet keeps a memo on one line; " | " marks where a new line starts.
+    el.textContent = btn.getAttribute('data-memo').split(' | ').join('\n');
     app.appendChild(el);
     var r = btn.getBoundingClientRect();
     var w = el.offsetWidth, h = el.offsetHeight;

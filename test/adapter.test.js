@@ -381,7 +381,7 @@ test('expiry rows without an end date become story text lines', () => {
   const csv = scheduleCsv(['2026-08-05,,,,,,기한 만료,테스트 재화,,,,']);
   const events = convert(csv, schema);
   assert.deepEqual(events, [{ type: 'story', start: '2026-08-05', name: '',
-    fullSubs: [{ label: '기한 만료', text: '테스트 재화' }] }]);
+    fullSubs: [{ label: '기한 만료', text: '테스트 재화', items: [{ text: '테스트 재화' }] }] }]);
 });
 
 test('student lists collect limited, fest and distributed students by first appearance', () => {
@@ -646,8 +646,9 @@ test('package sales show on their start day like updates, one line per day', () 
   const events = convert(csv);
   const stories = events.filter((e) => e.type === 'story');
   assert.deepEqual(stories.map((e) => [e.start, e.fullSubs]), [
-    ['2026-08-12', [{ label: '패키지판매', text: 'AP 패키지(7일)\n선물 패키지' }]],
-    ['2026-08-19', [{ label: '패키지판매', text: 'STEP UP 패키지' }]]
+    ['2026-08-12', [{ label: '패키지판매', text: 'AP 패키지(7일)\n선물 패키지',
+      items: [{ text: 'AP 패키지(7일)' }, { text: '선물 패키지' }] }]],
+    ['2026-08-19', [{ label: '패키지판매', text: 'STEP UP 패키지', items: [{ text: 'STEP UP 패키지' }] }]]
   ]);
   assert.equal(events.find((e) => e.type === 'new').fullSubs, undefined);
   assert.match(Timeline.rowsHtml(Timeline.buildRows(events).rows),
@@ -676,7 +677,22 @@ test('expiry rows of one day share one label, one row per line', () => {
     '2026-08-12,,,,,,기한 만료,재화 C,,,,'
   ]);
   assert.deepEqual(convert(csv, schema).map((e) => [e.start, e.fullSubs]), [
-    ['2026-08-05', [{ label: '기한 만료', text: '재화 A\n재화 B' }]],
-    ['2026-08-12', [{ label: '기한 만료', text: '재화 C' }]]
+    ['2026-08-05', [{ label: '기한 만료', text: '재화 A\n재화 B', items: [{ text: '재화 A' }, { text: '재화 B' }] }]],
+    ['2026-08-12', [{ label: '기한 만료', text: '재화 C', items: [{ text: '재화 C' }] }]]
   ]);
+});
+
+test('each stacked package row gets its own memo button', () => {
+  const csv = [HEADER + ',메모',
+    ',,,,,2026-08-12,,,패키지판매,A 패키지,,,,,"A 메모\n두 번째 줄"',
+    ',,,,,2026-08-12,,,패키지판매,B 패키지,,,,,',
+    ',,,,,2026-08-12,,,패키지판매,C 패키지,,,,,C 메모'].join('\n');
+  const events = convert(csv);
+  const line = events[0].fullSubs[0];
+  assert.equal(line.memo, undefined);
+  assert.deepEqual(line.items, [{ text: 'A 패키지', memo: 'A 메모\n두 번째 줄' }, { text: 'B 패키지' }, { text: 'C 패키지', memo: 'C 메모' }]);
+  const html = Timeline.rowsHtml(Timeline.buildRows(events).rows);
+  assert.equal((html.match(/memo-btn/g) || []).length, 2);
+  assert.ok(html.includes('A 패키지<button type="button" class="memo-btn" aria-label="메모 보기" data-memo="A 메모\n두 번째 줄">'));
+  assert.ok(html.includes('<br>B 패키지<br>C 패키지<button'));
 });
