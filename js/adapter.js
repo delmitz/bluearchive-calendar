@@ -349,11 +349,25 @@
     var period = r.start + '|' + (r.end || '');
     var short = !!r.end && (r.endT - r.t) / DAY_MS < 7;
     var g = c.groups.filter(function (x) { return x.period === period; })[0];
-    if (g) g.items += '·' + campaignItems(r);
-    else c.groups.push({ period: period, t: r.t, short: short, items: campaignItems(r),
+    var items = [r.get('항목1'), r.get('항목2')].filter(Boolean);
+    if (g) g.items = normalBeforeHard(g.items.concat(items));
+    else c.groups.push({ period: period, t: r.t, short: short, items: normalBeforeHard(items),
       suffix: short ? weekdayRange(r.t, r.endT - DAY_MS) : '' });
     c.groups.sort(function (a, b) { return (a.short - b.short) || (a.t - b.t); });
-    c.line.text = c.groups.map(function (x) { return x.items + x.suffix; }).join(', ');
+    c.line.text = c.groups.map(function (x) { return x.items.join('·') + x.suffix; }).join(', ');
+  }
+
+  // Moves each "X(Hard)" item right after its "X(Normal)" when that comes
+  // later, so a shared group reads "임무(Normal)·임무(Hard)".
+  function normalBeforeHard(items) {
+    var out = items.slice();
+    items.forEach(function (it) {
+      var m = /^(.*)\(Hard\)$/.exec(it);
+      if (!m) return;
+      var h = out.indexOf(it), n = out.indexOf(m[1] + '(Normal)');
+      if (n > h) { out.splice(h, 1); out.splice(n, 0, it); }
+    });
+    return out;
   }
 
   // Within each list, campaign lines that have a full-length group come

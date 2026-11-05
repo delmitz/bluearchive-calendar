@@ -277,6 +277,16 @@ test('rate campaigns share one line per rate, full-length items first, experienc
   ]);
 });
 
+test('a shared campaign group lists Normal before Hard', () => {
+  const csv = scheduleCsv([
+    '2026-08-05,2026-08-19,14,,,,이벤트,테스트,신규,,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,2배,임무(Hard),,,',
+    '2026-08-12,2026-08-19,7,,,,캠페인,2배,임무(Normal),,,'
+  ]);
+  const card = convert(csv)[0];
+  assert.deepEqual(card.weeks[1].subs, [{ label: '2배', text: '임무(Normal)·임무(Hard)' }]);
+});
+
 test('main story episodes are shown next to the title', () => {
   const schema = SCHEMA_CSV.replace('메인스토리,제목,,,,', '메인스토리,제목,화수,,,');
   const csv = scheduleCsv(['2026-08-05,,,,,,메인스토리,1장,1-17,,,']);
